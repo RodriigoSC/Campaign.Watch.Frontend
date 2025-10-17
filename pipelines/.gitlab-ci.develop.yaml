@@ -1,0 +1,27 @@
+stages:
+  - dockerbuild
+
+variables:
+  CI_REGISTRY_PROJECT_PATH: campaign-watch/hml/frontend
+  BUILD_ENV: build:develop
+
+dockerbuild:
+  image: docker:20.10.7
+  only:
+    - develop
+  stage: dockerbuild
+  tags:
+    - docker-fedra
+  services:
+    - docker:20.10.7-dind
+  before_script:
+    - docker info
+    - docker login ${CI_REGISTRY} -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD}
+  script:
+    - docker build --build-arg BUILD_ENV=${BUILD_ENV} -t ${CI_REGISTRY}/${CI_REGISTRY_PROJECT_PATH}:1.0.${CI_PIPELINE_IID} .
+    - docker build --build-arg BUILD_ENV=${BUILD_ENV} -t ${CI_REGISTRY}/${CI_REGISTRY_PROJECT_PATH}:latest .
+    - docker push ${CI_REGISTRY}/${CI_REGISTRY_PROJECT_PATH}:1.0.${CI_PIPELINE_IID}
+    - docker push ${CI_REGISTRY}/${CI_REGISTRY_PROJECT_PATH}:latest
+  after_script:
+    - docker rmi ${CI_REGISTRY}/${CI_REGISTRY_PROJECT_PATH}:1.0.${CI_PIPELINE_IID}
+    - docker logout ${CI_REGISTRY}

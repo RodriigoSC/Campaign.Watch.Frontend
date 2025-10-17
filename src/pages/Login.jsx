@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
+//import Input from '../components/ui/Input';
 import { Lock, Mail } from 'lucide-react';
 
 const Login = () => {
@@ -24,9 +24,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         {/* Logo e Título */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4">
+          {/*<div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4">
             <span className="text-4xl font-bold text-primary-600">CW</span>
-          </div>
+          </div>*/}
           <h1 className="text-3xl font-bold text-white mb-2">Campaign Watch</h1>
           <p className="text-primary-100">Sistema de Monitoramento de Campanhas</p>
         </div>
@@ -103,7 +103,7 @@ const Login = () => {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-sm text-primary-100">
-            © 2024 Campaign Watch. Todos os direitos reservados.
+            © 2025 Campaign Watch. Todos os direitos reservados.
           </p>
         </div>
       </div>

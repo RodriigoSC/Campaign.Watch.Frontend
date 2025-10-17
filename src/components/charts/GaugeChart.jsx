@@ -1,7 +1,8 @@
+import PropTypes from 'prop-types';
+
 const GaugeChart = ({ value = 0, max = 100, title, subtitle }) => {
   const percentage = (value / max) * 100;
-  const rotation = (percentage / 100) * 180 - 90;
-  
+
   const getColor = () => {
     if (percentage >= 80) return '#22c55e';
     if (percentage >= 50) return '#f59e0b';
@@ -31,16 +32,16 @@ const GaugeChart = ({ value = 0, max = 100, title, subtitle }) => {
             className="transition-all duration-1000"
           />
         </svg>
-        
+
         {/* Center value */}
-        <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pt-4">
           <span className="text-3xl font-bold" style={{ color: getColor() }}>
             {value}
           </span>
           <span className="text-sm text-gray-500">de {max}</span>
         </div>
       </div>
-      
+
       {title && (
         <h4 className="mt-4 text-sm font-medium text-gray-700">{title}</h4>
       )}
@@ -49,6 +50,13 @@ const GaugeChart = ({ value = 0, max = 100, title, subtitle }) => {
       )}
     </div>
   );
+};
+
+GaugeChart.propTypes = {
+  value: PropTypes.number,
+  max: PropTypes.number,
+  title: PropTypes.string,
+  subtitle: PropTypes.string,
 };
 
 export default GaugeChart;

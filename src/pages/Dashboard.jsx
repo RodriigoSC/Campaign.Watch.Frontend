@@ -135,9 +135,10 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle>Taxa de Sucesso</CardTitle>
           </CardHeader>
-          <CardContent>
-            <GaugeChart 
-              value={stats.success} 
+          {/* --- ALTERAÇÃO AQUI --- */}
+          <CardContent className="flex items-center justify-center">
+            <GaugeChart
+              value={stats.success}
               max={stats.total}
               title={`${successRate}%`}
               subtitle="de campanhas monitoradas"

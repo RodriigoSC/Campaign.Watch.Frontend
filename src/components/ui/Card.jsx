@@ -1,23 +1,31 @@
+import PropTypes from 'prop-types'; // 1. Importe o PropTypes
 import { cn } from '../../utils';
 
 export const Card = ({ children, className = '', ...props }) => {
   return (
-    <div 
+    <div
       className={cn(
         'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden',
         className
-      )} 
+      )}
       {...props}
     >
       {children}
     </div>
   );
 };
+
+// 2. Adicione a validação de props
+Card.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+};
+
 
 export const CardHeader = ({ children, className = '', ...props }) => {
   return (
-    <div 
-      className={cn('px-6 py-4 border-b border-gray-200', className)} 
+    <div
+      className={cn('px-6 py-4 border-b border-gray-200', className)}
       {...props}
     >
       {children}
@@ -25,10 +33,16 @@ export const CardHeader = ({ children, className = '', ...props }) => {
   );
 };
 
+CardHeader.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+};
+
+
 export const CardTitle = ({ children, className = '', ...props }) => {
   return (
-    <h3 
-      className={cn('text-lg font-semibold text-gray-900', className)} 
+    <h3
+      className={cn('text-lg font-semibold text-gray-900', className)}
       {...props}
     >
       {children}
@@ -36,10 +50,16 @@ export const CardTitle = ({ children, className = '', ...props }) => {
   );
 };
 
+CardTitle.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+};
+
+
 export const CardContent = ({ children, className = '', ...props }) => {
   return (
-    <div 
-      className={cn('px-6 py-4', className)} 
+    <div
+      className={cn('px-6 py-4', className)}
       {...props}
     >
       {children}
@@ -47,13 +67,24 @@ export const CardContent = ({ children, className = '', ...props }) => {
   );
 };
 
+CardContent.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
+};
+
+
 export const CardFooter = ({ children, className = '', ...props }) => {
   return (
-    <div 
-      className={cn('px-6 py-4 bg-gray-50 border-t border-gray-200', className)} 
+    <div
+      className={cn('px-6 py-4 bg-gray-50 border-t border-gray-200', className)}
       {...props}
     >
       {children}
     </div>
   );
+};
+
+CardFooter.propTypes = {
+  children: PropTypes.node,
+  className: PropTypes.string,
 };
