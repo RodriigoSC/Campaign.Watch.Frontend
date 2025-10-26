@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Plus, Eye, TrendingUp } from 'lucide-react';
+import { Plus, Eye, TrendingUp, RefreshCw } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import Loading from '../components/ui/Loading';
+import ErrorMessage from '../components/ui/ErrorBoundary';
 import { clientService } from '../services/clientService';
 import { campaignService } from '../services/campaignService';
 import { formatDateTime } from '../utils';
@@ -13,6 +14,7 @@ const Clients = () => {
   const [clients, setClients] = useState([]);
   const [clientStats, setClientStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,6 +24,8 @@ const Clients = () => {
   const loadClients = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const clientsData = await clientService.getAllClients();
       setClients(clientsData);
 
@@ -34,24 +38,38 @@ const Clients = () => {
             total: campaigns.length,
             active: campaigns.filter(c => c.isActive).length,
           };
-        } catch (error) {
+        } catch (err) {
+          console.error(`Erro ao carregar campanhas do cliente ${client.name}:`, err);
           stats[client.name] = { total: 0, active: 0 };
         }
       }
       setClientStats(stats);
-    } catch (error) {
-      console.error('Erro ao carregar clientes:', error);
+    } catch (err) {
+      console.error('Erro ao carregar clientes:', err);
+      setError(err.message || 'Erro ao carregar clientes');
     } finally {
       setLoading(false);
     }
   };
 
   const handleViewClientCampaigns = (clientName) => {
-    navigate(`/campaigns?client=${clientName}`);
+    navigate(`/campaigns?client=${encodeURIComponent(clientName)}`);
   };
 
   if (loading) {
     return <Loading size="lg" text="Carregando clientes..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <ErrorMessage
+          title="Erro ao carregar clientes"
+          message={error}
+          onRetry={loadClients}
+        />
+      </div>
+    );
   }
 
   return (
@@ -62,10 +80,21 @@ const Clients = () => {
           <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
           <p className="text-gray-600 mt-1">Gerencie todos os clientes cadastrados</p>
         </div>
-        <Button variant="primary">
-          <Plus size={20} className="mr-2" />
-          Novo Cliente
-        </Button>
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadClients}
+            disabled={loading}
+          >
+            <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          <Button variant="primary">
+            <Plus size={20} className="mr-2" />
+            Novo Cliente
+          </Button>
+        </div>
       </div>
 
       {/* Clients Grid */}
@@ -129,6 +158,16 @@ const Clients = () => {
                 </div>
               )}
 
+              {/* Project ID */}
+              {client.campaignConfig && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Project ID</p>
+                  <p className="text-sm font-mono text-gray-800">
+                    {client.campaignConfig.projectID}
+                  </p>
+                </div>
+              )}
+
               {/* Actions */}
               <Button
                 variant="outline"
@@ -147,7 +186,11 @@ const Clients = () => {
       {clients.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
-            <p className="text-gray-500">Nenhum cliente cadastrado</p>
+            <p className="text-gray-500 mb-4">Nenhum cliente cadastrado</p>
+            <Button variant="primary">
+              <Plus size={20} className="mr-2" />
+              Cadastrar Primeiro Cliente
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -155,4 +198,4 @@ const Clients = () => {
   );
 };
 
-export default Clients;
+export default Clients
