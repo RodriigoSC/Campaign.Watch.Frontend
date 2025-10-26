@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// Garanta que VITE_API_URL esteja definida no seu .env ou ambiente
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
 
 const api = axios.create({
@@ -10,19 +11,16 @@ const api = axios.create({
   },
 });
 
-// Interceptor de requisição para adicionar token
+// Interceptor de requisição (mantém igual)
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
-    // Log em desenvolvimento
     if (import.meta.env.DEV) {
-      console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, config.data);
+      console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, config.data || '');
     }
-    
     return config;
   },
   (error) => {
@@ -31,17 +29,17 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor de resposta para tratamento de erros
+// Interceptor de resposta (CORRIGIDO)
 api.interceptors.response.use(
   (response) => {
-    // Log em desenvolvimento
     if (import.meta.env.DEV) {
-      console.log(`[API] Response ${response.config.url}:`, response.data);
+      // Log mostra o status e a URL antes de retornar apenas os dados
+      console.log(`[API] Response ${response.config.url}:`, response.status, response.data);
     }
-    return response;
+    // *** CORREÇÃO AQUI: Retorna apenas os dados da resposta ***
+    return response.data;
   },
   (error) => {
-    // Log detalhado do erro
     console.error('[API] Error:', {
       url: error.config?.url,
       method: error.config?.method,
@@ -50,29 +48,36 @@ api.interceptors.response.use(
       message: error.message,
     });
 
-    // Tratamento de erros específicos
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login') {
+         window.location.href = '/login';
+      }
+      return Promise.reject(new Error('Sessão expirada ou inválida. Faça login novamente.'));
     }
 
-    // Mensagem de erro amigável
-    let errorMessage = 'Erro ao comunicar com o servidor';
-    
+    let errorMessage = 'Erro ao comunicar com o servidor. Tente novamente mais tarde.';
     if (error.response?.data) {
-      // Se a API retornou uma mensagem específica
       if (typeof error.response.data === 'string') {
         errorMessage = error.response.data;
       } else if (error.response.data.message) {
         errorMessage = error.response.data.message;
       } else if (error.response.data.title) {
         errorMessage = error.response.data.title;
+        if (error.response.data.errors) {
+          const validationErrors = Object.values(error.response.data.errors).flat().join(' ');
+          errorMessage += ` Detalhes: ${validationErrors}`;
+        }
+      } else if (typeof error.response.data === 'object') {
+        errorMessage = JSON.stringify(error.response.data);
       }
     } else if (error.code === 'ECONNABORTED') {
-      errorMessage = 'Tempo de resposta esgotado. Tente novamente.';
+      errorMessage = 'Tempo de resposta esgotado. Verifique sua conexão ou tente novamente.';
     } else if (error.message === 'Network Error') {
-      errorMessage = 'Erro de conexão. Verifique sua internet e se a API está rodando.';
+      errorMessage = 'Erro de conexão. Verifique sua internet e se a API está acessível.';
+    } else if (error.message) {
+      errorMessage = error.message;
     }
 
     return Promise.reject(new Error(errorMessage));

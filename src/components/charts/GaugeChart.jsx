@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 const GaugeChart = ({ value = 0, max = 100, title, subtitle }) => {
-  const percentage = (value / max) * 100;
+  const percentage = Math.min((value / max) * 100, 100);
 
   const getColor = () => {
     if (percentage >= 80) return '#22c55e';
@@ -10,32 +10,33 @@ const GaugeChart = ({ value = 0, max = 100, title, subtitle }) => {
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative w-48 h-24">
-        {/* Background arc */}
-        <svg className="w-full h-full" viewBox="0 0 200 100">
+    <div className="flex flex-col items-center justify-center w-full">
+      <div className="relative w-60 h-32 sm:w-72 sm:h-36">
+        {/* SVG mais espaçado (viewBox aumentado e arco ajustado) */}
+        <svg className="w-full h-full" viewBox="0 0 220 180">
+          {/* Arco de fundo */}
           <path
-            d="M 20 80 A 80 80 0 0 1 180 80"
+            d="M 30 100 A 90 90 0 0 1 190 100"
             fill="none"
             stroke="#e5e7eb"
             strokeWidth="16"
             strokeLinecap="round"
           />
-          {/* Filled arc */}
+          {/* Arco preenchido */}
           <path
-            d="M 20 80 A 80 80 0 0 1 180 80"
+            d="M 30 100 A 90 90 0 0 1 190 100"
             fill="none"
             stroke={getColor()}
             strokeWidth="16"
             strokeLinecap="round"
-            strokeDasharray={`${percentage * 2.51}, 1000`}
-            className="transition-all duration-1000"
+            strokeDasharray={`${percentage * 2.83}, 1000`}
+            className="transition-all duration-700 ease-out"
           />
         </svg>
 
-        {/* Center value */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pt-4">
-          <span className="text-3xl font-bold" style={{ color: getColor() }}>
+        {/* Texto central */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center translate-y-3">
+          <span className="text-4xl font-bold" style={{ color: getColor() }}>
             {value}
           </span>
           <span className="text-sm text-gray-500">de {max}</span>
@@ -43,7 +44,7 @@ const GaugeChart = ({ value = 0, max = 100, title, subtitle }) => {
       </div>
 
       {title && (
-        <h4 className="mt-4 text-sm font-medium text-gray-700">{title}</h4>
+        <h4 className="mt-3 text-base font-semibold text-gray-800">{title}</h4>
       )}
       {subtitle && (
         <p className="text-xs text-gray-500">{subtitle}</p>

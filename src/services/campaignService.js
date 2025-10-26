@@ -1,32 +1,146 @@
-// Mock de dados de campanhas
-const mockCampaigns = [
-    { id: 1, numberId: 101, name: 'Campanha de Verão 2024', clientName: 'Cliente A', campaignType: 'Recorrente', campaignStatus: 'Concluído', monitoringStatus: 'Concluído', lastCheckMonitoring: '2024-07-20T10:00:00Z' },
-    { id: 2, numberId: 102, name: 'Lançamento Produto X', clientName: 'Cliente B', campaignType: 'Pontual', campaignStatus: 'Em andamento', monitoringStatus: 'Em andamento', lastCheckMonitoring: '2024-07-21T11:30:00Z' },
-    { id: 3, numberId: 103, name: 'Promoção Dia dos Pais', clientName: 'Cliente A', campaignType: 'Recorrente', campaignStatus: 'Agendada', monitoringStatus: 'Pendente', lastCheckMonitoring: null },
-    { id: 4, numberId: 104, name: 'Black Friday Antecipada', clientName: 'Cliente C', campaignType: 'Pontual', campaignStatus: 'Concluído', monitoringStatus: 'Falha', lastCheckMonitoring: '2024-07-19T15:00:00Z' },
-    { id: 5, numberId: 105, name: 'Campanha de Inverno', clientName: 'Cliente B', campaignType: 'Recorrente', campaignStatus: 'Em andamento', monitoringStatus: 'Execução atrasada', lastCheckMonitoring: '2024-07-18T09:00:00Z' },
-];
+import api from './api';
 
-// Simula uma chamada de API com um pequeno atraso
-const mockApiCall = (data) => new Promise(resolve => setTimeout(() => resolve(data), 300));
+// Helper para construir query string a partir de um objeto de filtros
+const buildQueryString = (params) => {
+  const query = new URLSearchParams();
+  for (const key in params) {
+    if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+      // Formata datas para ISO string se forem objetos Date
+      if (params[key] instanceof Date) {
+        query.append(key, params[key].toISOString());
+      } else {
+        query.append(key, params[key]);
+      }
+    }
+  }
+  return query.toString();
+};
 
 export const campaignService = {
-  getCampaignsPaginated: (page, pageSize) => mockApiCall(mockCampaigns.slice((page - 1) * pageSize, page * pageSize)),
-  getCampaignById: (id) => mockApiCall(mockCampaigns.find(c => c.id === id)),
-  getCampaignsByClient: (clientName) => mockApiCall(mockCampaigns.filter(c => c.clientName === clientName)),
-  getSuccessfullyMonitoredCampaigns: () => mockApiCall(mockCampaigns.filter(c => c.monitoringStatus === 'Concluído')),
-  getCampaignsWithIntegrationErrors: () => mockApiCall(mockCampaigns.filter(c => c.monitoringStatus === 'Falha')),
-  getCampaignsWithDelayedExecution: () => mockApiCall(mockCampaigns.filter(c => c.monitoringStatus === 'Execução atrasada')),
-  getCountByCampaignStatus: () => mockApiCall([
-    { status: 'Concluído', count: 2 },
-    { status: 'Em andamento', count: 2 },
-    { status: 'Agendada', count: 1 },
-  ]),
-  getCountByMonitoringStatus: () => mockApiCall([
-    { status: 'Concluído', count: 1 },
-    { status: 'Em andamento', count: 1 },
-    { status: 'Pendente', count: 1 },
-    { status: 'Falha', count: 1 },
-    { status: 'Execução atrasada', count: 1 },
-  ]),
+  /**
+   * Obtém campanhas monitoradas com paginação e filtros.
+   * @param {object} filters - Objeto com filtros (clientName, monitoringStatus, hasErrors, dataInicio, dataFim, pagina, tamanhoPagina).
+   * @returns {Promise<Array<object>>} Lista de campanhas monitoradas.
+   */
+  getMonitoredCampaigns: async (filters = {}) => {
+    try {
+      const queryString = buildQueryString(filters);
+      const response = await api.get(`/CampaignMonitoring?${queryString}`);
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar campanhas monitoradas:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtém detalhes de uma campanha monitorada pelo seu ID de monitoramento (ObjectId).
+   * @param {string} id - O ID de monitoramento da campanha.
+   * @returns {Promise<object>} Detalhes da campanha.
+   */
+  getMonitoredCampaignById: async (id) => {
+    try {
+      const response = await api.get(`/CampaignMonitoring/${id}`);
+      return response;
+    } catch (error) {
+      console.error(`Erro ao buscar campanha monitorada com ID ${id}:`, error);
+      throw error;
+    }
+  },
+
+   /**
+   * Obtém detalhes de uma campanha monitorada pelo nome do cliente e ID original.
+   * @param {string} clientName - Nome do cliente.
+   * @param {string} idCampanha - ID original da campanha.
+   * @returns {Promise<object>} Detalhes da campanha.
+   */
+    getMonitoredCampaignByOriginalId: async (clientName, idCampanha) => {
+      try {
+        const response = await api.get(`/CampaignMonitoring/original/${encodeURIComponent(clientName)}/${encodeURIComponent(idCampanha)}`);
+        return response;
+      } catch (error) {
+        console.error(`Erro ao buscar campanha original ${idCampanha} do cliente ${clientName}:`, error);
+        throw error;
+      }
+    },
+
+  /**
+   * Obtém as métricas de uma campanha específica.
+   * @param {string} id - O ID de monitoramento da campanha.
+   * @returns {Promise<object>} Objeto com as métricas.
+   */
+  getCampaignMetrics: async (id) => {
+    try {
+      const response = await api.get(`/CampaignMonitoring/${id}/metrics`);
+      return response;
+    } catch (error) {
+      console.error(`Erro ao buscar métricas da campanha ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtém o diagnóstico de uma campanha específica.
+   * @param {string} id - O ID de monitoramento da campanha.
+   * @returns {Promise<object>} Objeto com o diagnóstico.
+   */
+  getCampaignDiagnostic: async (id) => {
+    try {
+      const response = await api.get(`/CampaignMonitoring/${id}/diagnostic`);
+      return response;
+    } catch (error) {
+      console.error(`Erro ao buscar diagnóstico da campanha ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtém as execuções de uma campanha específica.
+   * @param {string} id - O ID de monitoramento da campanha.
+   * @returns {Promise<Array<object>>} Lista de execuções.
+   */
+  getCampaignExecutions: async (id) => {
+    try {
+      const response = await api.get(`/CampaignMonitoring/${id}/executions`);
+      return response;
+    } catch (error) {
+      console.error(`Erro ao buscar execuções da campanha ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // --- Funções relacionadas a Execuções (ExecutionMonitoringController) ---
+
+  /**
+   * Obtém detalhes de uma execução específica pelo seu ID original.
+   * @param {string} executionId - O ID original da execução.
+   * @returns {Promise<object>} Detalhes da execução.
+   */
+  getExecutionById: async (executionId) => {
+    try {
+      const response = await api.get(`/ExecutionMonitoring/${executionId}`);
+      return response;
+    } catch (error) {
+      console.error(`Erro ao buscar execução com ID ${executionId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtém execuções que tiveram erros de monitoramento.
+   * @param {object} filters - Filtros opcionais (clientName, dataInicio, dataFim).
+   * @returns {Promise<Array<object>>} Lista de execuções com erros.
+   */
+  getExecutionsWithErrors: async (filters = {}) => {
+    try {
+      const queryString = buildQueryString(filters);
+      const response = await api.get(`/ExecutionMonitoring/with-errors?${queryString}`);
+      return response;
+    } catch (error) {
+      console.error('Erro ao buscar execuções com erros:', error);
+      throw error;
+    }
+  }
+
+  // Adicione outras funções conforme necessário para interagir com CampaignMonitoringController e ExecutionMonitoringController
 };

@@ -1,29 +1,37 @@
 import { create } from 'zustand';
 import { authService } from '../services/authService';
 
+// Estado inicial tenta pegar usuário e token do storage
+const initialUser = authService.getCurrentUser();
+const initialIsAuthenticated = authService.isAuthenticated();
+
 export const useAuthStore = create((set) => ({
-  user: authService.getCurrentUser(),
-  isAuthenticated: authService.isAuthenticated(),
+  user: initialUser,
+  isAuthenticated: initialIsAuthenticated,
   isLoading: false,
   error: null,
 
   login: async (username, password) => {
     set({ isLoading: true, error: null });
     try {
-      // Use mockLogin para desenvolvimento ou login para produção
-      const { user } = await authService.mockLogin(username, password);
+      // Chama o serviço de login real
+      const { user } = await authService.login(username, password);
+      // Atualiza o estado com o usuário retornado e marca como autenticado
       set({ user, isAuthenticated: true, isLoading: false });
       return { success: true };
     } catch (error) {
-      set({ error: error.message, isLoading: false });
-      return { success: false, error: error.message };
+      // Atualiza o estado com a mensagem de erro
+      set({ error: error.message || 'Falha no login', isLoading: false });
+      return { success: false, error: error.message || 'Falha no login' };
     }
   },
 
   logout: () => {
     authService.logout();
-    set({ user: null, isAuthenticated: false });
+    // Limpa o estado
+    set({ user: null, isAuthenticated: false, error: null });
   },
 
+  // Função para limpar erros manualmente, se necessário
   clearError: () => set({ error: null }),
 }));
