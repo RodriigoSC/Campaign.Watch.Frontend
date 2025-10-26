@@ -6,7 +6,7 @@ import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import Loading from '../components/ui/Loading';
 import ErrorMessage from '../components/ui/ErrorMessage';
-import Modal from '../components/ui/Modal';
+import CampaignModal from '../components/ui/CampaignModal';
 import Input from '../components/ui/Input';
 // Removido Select não utilizado
 // import Select from '../components/ui/Select';
@@ -294,7 +294,7 @@ const Clients = () => {
             )}
 
             {/* Modal de Criação/Edição */}
-            <Modal
+            <CampaignModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 title={editingClient ? 'Editar Cliente' : 'Novo Cliente'}
@@ -347,7 +347,7 @@ const Clients = () => {
                         </Button>
                     </div>
                 </div>
-            </Modal>
+            </CampaignModal>
         </div>
     );
 };

@@ -3,7 +3,7 @@ import { Plus, Mail, MessageSquare, Bell, Trash2, Edit } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import Modal from '../components/ui/Modal';
+import CampaignModal from '../components/ui/CampaignModal';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 
@@ -238,7 +238,7 @@ const Alerts = () => {
       </Card>
 
       {/* Modal de Criação/Edição */}
-      <Modal
+      <CampaignModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={editingAlert ? 'Editar Alerta' : 'Novo Alerta'}
@@ -296,7 +296,7 @@ const Alerts = () => {
             </Button>
           </div>
         </div>
-      </Modal>
+      </CampaignModal>
     </div>
   );
 };

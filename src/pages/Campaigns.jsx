@@ -8,11 +8,12 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Badge from '../components/ui/Badge';
 import Loading from '../components/ui/Loading';
-import Modal from '../components/ui/Modal';
+import CampaignModal from '../components/ui/CampaignModal';
 import ErrorMessage from '../components/ui/ErrorMessage';
+import ExecutionHistoryModal from '../components/ui/ExecutionHistoryModal'; 
 import { campaignService } from '../services/campaignService';
 import { clientService } from '../services/clientService';
-import { formatDateTime, truncate, formatNumber } from '../utils'; // formatNumber importado
+import { formatDateTime, truncate, formatNumber } from '../utils';
 
 const Campaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -22,7 +23,9 @@ const Campaigns = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  // navigate removido
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [campaignForHistory, setCampaignForHistory] = useState(null);
+
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -92,7 +95,6 @@ const Campaigns = () => {
      }));
   };
 
-  // handleSearch removido
 
   const handleViewDetails = async (campaignId) => {
     try {
@@ -109,6 +111,11 @@ const Campaigns = () => {
     } finally {
         setLoading(false);
     }
+  };
+
+  const handleViewHistory = (campaign) => {
+    setCampaignForHistory(campaign); // Define qual campanha será exibida no modal
+    setShowHistoryModal(true); // Abre o modal de histórico
   };
 
   const filteredCampaigns = campaigns.filter((campaign) => {
@@ -213,9 +220,7 @@ const Campaigns = () => {
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Cliente</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status (Origem)</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Status (Monitor.)</th>
-                    {/* --- AJUSTE CABEÇALHO --- */}
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Última Verificação</th>
-                    {/* --- AJUSTE CABEÇALHO --- */}
                     <th className="py-3 px-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
                       Ações
                     </th>
@@ -276,7 +281,7 @@ const Campaigns = () => {
       )}
 
       {/* Modal de Detalhes */}
-      <Modal
+      <CampaignModal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setError(null); }}
         title={`Detalhes da Campanha #${selectedCampaign?.numberId || '...'}`}
@@ -290,14 +295,31 @@ const Campaigns = () => {
                   onRetry={() => selectedCampaign?.id && handleViewDetails(selectedCampaign.id)}
               />
           )}
-        {selectedCampaign && !loading && !error && <CampaignDetails campaign={selectedCampaign} />}
-      </Modal>
+        {selectedCampaign && !loading && !error && ( 
+          <CampaignDetails 
+          campaign={selectedCampaign}
+          onViewHistory={handleViewHistory}
+           />
+          )}
+      </CampaignModal>
+
+      {/* Modal de Histórico de Execuções */}
+      {campaignForHistory && (
+        <ExecutionHistoryModal
+          isOpen={showHistoryModal}
+          onClose={() => { setShowHistoryModal(false); setCampaignForHistory(null); }} // Limpa campaignForHistory ao fechar
+          campaignId={campaignForHistory.id}
+          campaignName={campaignForHistory.name}
+        />
+      )}
+
+
     </div>
   );
 };
 
 // Componente CampaignDetails (ajustado para usar formatNumber)
-const CampaignDetails = ({ campaign }) => {
+const CampaignDetails = ({ campaign, onViewHistory }) => {
   return (
     <div className="space-y-6">
       {/* Informações Básicas */}
@@ -448,8 +470,7 @@ const CampaignDetails = ({ campaign }) => {
              <Button
                 variant="primary"
                 size="sm"
-                onClick={() => alert(`Navegar para execuções da campanha ${campaign.id} (não implementado)`)}
-              >
+                onClick={() => onViewHistory(campaign)}>
                 Ver Histórico de Execuções
               </Button>
         </div>
@@ -459,7 +480,8 @@ const CampaignDetails = ({ campaign }) => {
 };
 
 CampaignDetails.propTypes = {
-    campaign: PropTypes.object.isRequired
+    campaign: PropTypes.object.isRequired,
+    onViewHistory: PropTypes.func.isRequired,
 };
 
 export default Campaigns;
