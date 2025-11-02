@@ -1,26 +1,16 @@
+// src/features/dashboard/pages/DashboardPage.jsx
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../components/ui/Card";
-import {
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  RefreshCw,
-} from "lucide-react";
-import GaugeChart from "../components/charts/GaugeChart";
-import StatusChart from "../components/charts/StatusChart";
-import BarChart from "../components/charts/BarChart";
-import Loading from "../components/ui/Loading";
-import ErrorMessage from "../components/ui/ErrorMessage";
-import Button from "../components/ui/Button";
-import { dashboardService } from "../services/dashboardService";
-import { formatNumber, formatDateTime } from "../utils";
-import { clientService } from "../services/clientService";
+import { Card, CardHeader, CardTitle, CardContent } from "../../../shared/components/Card/Card";
+import { TrendingUp, AlertCircle, CheckCircle, Clock, RefreshCw } from "lucide-react";
+import GaugeChart from "../../../shared/components/Charts/GaugeChart";
+import StatusChart from "../../../shared/components/Charts/StatusChart";
+import BarChart from "../../../shared/components/Charts/BarChart";
+import Loading from "../../../shared/components/Loading/Loading";
+import ErrorMessage from "../../../shared/components/ErrorMessage/ErrorMessage";
+import Button from "../../../shared/components/Button/Button";
+import { dashboardService } from "../../../shared/services/dashboardService";
+import { formatNumber, formatDateTime } from "../../../shared/utils";
+import { clientService } from "../../../shared/services/clientService";
 
 const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
@@ -67,14 +57,11 @@ const DashboardPage = () => {
     loadClients();
   }, []);
 
-  // --- NOVO ---
-  // Função para o botão de refresh usar o filtro selecionado
   const handleRefresh = () => {
     const client = selectedClient === "all" ? null : selectedClient;
     loadDashboardData(client);
   };
 
-  // Adicionado console.log para verificar o estado
   console.log("Dashboard State Updated:", dashboardData);
 
   if (loading) {
@@ -87,20 +74,19 @@ const DashboardPage = () => {
         <ErrorMessage
           title="Erro ao carregar dashboard"
           message={error}
-          onRetry={handleRefresh} // Usa a nova função
+          onRetry={handleRefresh}
         />
       </div>
     );
   }
 
-  // Modificado: Verifica se dashboardData e summary existem antes de desestruturar
   if (!dashboardData || !dashboardData.summary) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <ErrorMessage
           title="Dados Indisponíveis"
           message="Não foi possível carregar os dados do dashboard ou os dados estão incompletos. Verifique a conexão com a API."
-          onRetry={handleRefresh} // Usa a nova função
+          onRetry={handleRefresh}
         />
       </div>
     );
@@ -114,7 +100,6 @@ const DashboardPage = () => {
     upcomingExecutions,
   } = dashboardData;
 
-  // Mapeamento para BarChart (este estava correto)
   const healthChartData =
     campaignsByHealth?.map((item) => ({
       name: item.healthLevel,
@@ -126,9 +111,7 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* --- BLOCO DE HEADER E FILTRO COMBINADO --- */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        {/* Lado Esquerdo: Título e Atualização */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">
@@ -138,9 +121,7 @@ const DashboardPage = () => {
           </p>
         </div>
 
-        {/* Lado Direito: Filtros e Ações */}
         <div className="flex items-center gap-4">
-          {/* Seletor de Cliente (Movido para cá) */}
           <div className="flex items-center gap-2">
             <label
               htmlFor="clientSelect"
@@ -167,7 +148,6 @@ const DashboardPage = () => {
             </select>
           </div>
 
-          {/* Botão Atualizar (Agora usa handleRefresh) */}
           <Button
             variant="outline"
             size="sm"
@@ -183,11 +163,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* --- FIM DO BLOCO COMBINADO --- */}
-
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -195,7 +171,6 @@ const DashboardPage = () => {
                 <p className="text-sm font-medium text-gray-600">
                   Total de Campanhas
                 </p>
-                {/* Adicionado fallback seguro */}
                 <p className="text-3xl font-bold text-gray-900 mt-2">
                   {formatNumber(summary?.totalCampaigns ?? 0)}
                 </p>
@@ -206,7 +181,6 @@ const DashboardPage = () => {
             </div>
           </CardContent>
         </Card>
-        {/* Ativas */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -224,7 +198,6 @@ const DashboardPage = () => {
             </div>
           </CardContent>
         </Card>
-        {/* Com Problemas */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -242,7 +215,6 @@ const DashboardPage = () => {
             </div>
           </CardContent>
         </Card>
-        {/* Execuções Hoje */}
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -266,9 +238,7 @@ const DashboardPage = () => {
         </Card>
       </div>
 
-      {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Saúde Geral */}
         <Card className="lg:col-span-1 flex flex-col justify-between">
           <CardHeader className="pb-2">
             <CardTitle>Saúde Geral do Sistema</CardTitle>
@@ -283,13 +253,11 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
 
-        {/* Status das Campanhas */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Status das Campanhas (Monitoramento)</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Passa campaignsByStatus diretamente */}
             {campaignsByStatus && campaignsByStatus.length > 0 ? (
               <StatusChart data={campaignsByStatus} />
             ) : (
@@ -301,15 +269,12 @@ const DashboardPage = () => {
         </Card>
       </div>
 
-      {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Nível de Saúde */}
         <Card>
           <CardHeader>
             <CardTitle>Campanhas por Nível de Saúde</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Passa healthChartData mapeado */}
             {healthChartData && healthChartData.length > 0 ? (
               <BarChart data={healthChartData} dataKey="value" nameKey="name" />
             ) : (
@@ -320,13 +285,11 @@ const DashboardPage = () => {
           </CardContent>
         </Card>
 
-        {/* Próximas Execuções */}
         <Card>
           <CardHeader>
             <CardTitle>Próximas Execuções (24h)</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Verifica se upcomingExecutions existe e tem itens */}
             <div className="space-y-3 max-h-80 overflow-y-auto">
               {upcomingExecutions && upcomingExecutions.length > 0 ? (
                 upcomingExecutions.map((execution) => (
@@ -362,8 +325,6 @@ const DashboardPage = () => {
         </Card>
       </div>
 
-      {/* Recent Issues */}
-      {/* Verifica se recentIssues existe e tem itens */}
       {recentIssues && recentIssues.length > 0 && (
         <Card>
           <CardHeader>

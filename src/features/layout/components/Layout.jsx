@@ -1,21 +1,19 @@
+// src/features/layout/components/Layout.jsx
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import DisclaimerBanner from '../ui/DisclaimerBanner';
+import DisclaimerBanner from './DisclaimerBanner';
 
 const Layout = () => {
-  // Estado para controlar se a sidebar está recolhida
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Função para alternar o estado
   const toggleSidebar = () => {
     setSidebarCollapsed(!isSidebarCollapsed);
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Passamos o estado e a função para a Sidebar */}
       <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
 
       <div className="flex-1 flex flex-col overflow-hidden">

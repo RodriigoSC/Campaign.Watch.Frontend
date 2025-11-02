@@ -1,7 +1,8 @@
+// src/shared/components/ErrorMessage/ErrorMessage.jsx
 import PropTypes from 'prop-types';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import Button from './Button'; // Importa o componente Button existente
-import { Card, CardContent } from './Card'; // Importa Card e CardContent
+import Button from '../Button/Button';
+import { Card, CardContent } from '../Card/Card';
 
 const ErrorMessage = ({ title = "Ocorreu um Erro", message, onRetry, className = '' }) => {
   return (
@@ -12,13 +13,12 @@ const ErrorMessage = ({ title = "Ocorreu um Erro", message, onRetry, className =
           <h3 className="text-lg font-semibold text-error-800 mb-2">{title}</h3>
           {message && (
             <p className="text-sm text-error-700 mb-6 max-w-md">
-              {/* Exibe a mensagem de erro, tratando objetos ou strings */}
               {typeof message === 'string' ? message : JSON.stringify(message)}
             </p>
           )}
           {onRetry && (
             <Button
-              variant="danger" // Ou 'outline' com cor de erro
+              variant="danger"
               size="sm"
               onClick={onRetry}
             >
@@ -32,10 +32,9 @@ const ErrorMessage = ({ title = "Ocorreu um Erro", message, onRetry, className =
   );
 };
 
-// Adiciona validação de PropTypes
 ErrorMessage.propTypes = {
   title: PropTypes.string,
-  message: PropTypes.oneOfType([PropTypes.string, PropTypes.object]), // Aceita string ou objeto
+  message: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   onRetry: PropTypes.func,
   className: PropTypes.string,
 };

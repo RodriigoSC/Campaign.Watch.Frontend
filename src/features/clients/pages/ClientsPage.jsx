@@ -1,17 +1,15 @@
+// src/features/clients/pages/ClientsPage.jsx
 import { useState, useEffect } from 'react';
-// Removido TrendingUp
 import { Plus, Eye, RefreshCw, Edit, Trash2, Bell, Mail } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
-import Loading from '../components/ui/Loading';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import CampaignModal from '../components/ui/CampaignModal';
-import Input from '../components/ui/Input';
-// Removido Select não utilizado
-// import Select from '../components/ui/Select';
-import { clientService } from '../services/clientService';
-import { formatDateTime } from '../utils';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/Card/Card';
+import Button from '../../../shared/components/Button/Button';
+import Badge from '../../../shared/components/Badge/Badge';
+import Loading from '../../../shared/components/Loading/Loading';
+import ErrorMessage from '../../../shared/components/ErrorMessage/ErrorMessage';
+import CampaignModal from '../../../shared/components/Modal/CampaignModal';
+import Input from '../../../shared/components/Input/Input';
+import { clientService } from '../../../shared/services/clientService';
+import { formatDateTime } from '../../../shared/utils';
 import { useNavigate } from 'react-router-dom';
 
 const ClientsPage = () => {
@@ -65,8 +63,6 @@ const ClientsPage = () => {
         setLoading(true);
         try {
             if (editingClient) {
-                // CORREÇÃO: Não desestruturar 'id' se não for usado.
-                // Passa o formData diretamente, a API espera os dados sem o ID no corpo.
                 await clientService.updateClient(editingClient.id, formData);
             } else {
                 await clientService.createClient(formData);
@@ -96,7 +92,6 @@ const ClientsPage = () => {
         }
     };
 
-
     if (loading && clients.length === 0) {
         return <Loading size="lg" text="Carregando clientes..." />;
     }
@@ -119,7 +114,6 @@ const ClientsPage = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
@@ -142,7 +136,6 @@ const ClientsPage = () => {
                 </div>
             </div>
 
-             {/* Info Cards */}
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                 <CardContent className="pt-6">
@@ -157,7 +150,6 @@ const ClientsPage = () => {
                     </div>
                 </CardContent>
                 </Card>
-                {/* Outros Info Cards ... */}
                  <Card>
                 <CardContent className="pt-6">
                     <div className="flex items-center space-x-3">
@@ -199,11 +191,9 @@ const ClientsPage = () => {
                 />
              )}
 
-            {/* Clients Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {clients.map((client) => (
                     <Card key={client.id} className="hover:shadow-lg transition-shadow flex flex-col">
-                       {/* CardHeader e CardContent como antes... */}
                        <CardHeader className="border-b border-gray-200">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1 mr-2 overflow-hidden">
@@ -282,7 +272,6 @@ const ClientsPage = () => {
 
             {clients.length === 0 && !loading && !error && (
                 <Card>
-                   {/* Conteúdo para quando não há clientes... */}
                    <CardContent className="text-center py-12">
                         <p className="text-gray-500 mb-4">Nenhum cliente cadastrado</p>
                         <Button variant="primary" onClick={() => handleOpenModal()}>
@@ -293,14 +282,12 @@ const ClientsPage = () => {
                 </Card>
             )}
 
-            {/* Modal de Criação/Edição */}
             <CampaignModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 title={editingClient ? 'Editar Cliente' : 'Novo Cliente'}
             >
                 <div className="space-y-4">
-                   {/* Inputs e Checkbox como antes... */}
                    <Input
                         label="Nome do Cliente"
                         value={formData.name || ''}

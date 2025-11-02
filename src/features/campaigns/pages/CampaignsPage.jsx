@@ -1,16 +1,17 @@
+// src/features/campaigns/pages/CampaignsPage.jsx
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Search, Eye, RefreshCw } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/Card';
-import Button from '../../../shared/components/Button';
-import Input from '../../../shared/components/Input';
-import Select from '../../../shared/components/Select';
-import Badge from '../../../shared/components/Badge';
-import Loading from '../../../shared/components/Loading';
-import CampaignModal from '../../../shared/components/Modals/CampaignModal';
-import ErrorMessage from '../../../shared/components/ErrorMessage';
-import ExecutionHistoryModal from '../../../shared/components/Modals/ExecutionHistoryModal'; 
+import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/Card/Card';
+import Button from '../../../shared/components/Button/Button';
+import Input from '../../../shared/components/Input/Input';
+import Select from '../../../shared/components/Select/Select';
+import Badge from '../../../shared/components/Badge/Badge';
+import Loading from '../../../shared/components/Loading/Loading';
+import CampaignModal from '../../../shared/components/Modal/CampaignModal';
+import ErrorMessage from '../../../shared/components/ErrorMessage/ErrorMessage';
+import ExecutionHistoryModal from '../../../shared/components/Modal/ExecutionHistoryModal'; 
 import { campaignService } from '../../../shared/services/campaignService';
 import { clientService } from '../../../shared/services/clientService';
 import { formatDateTime, truncate, formatNumber } from '../../../shared/utils';
@@ -25,7 +26,6 @@ const CampaignsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [campaignForHistory, setCampaignForHistory] = useState(null);
-
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -49,10 +49,6 @@ const CampaignsPage = () => {
           pagina: filters.pagina,
           tamanhoPagina: filters.tamanhoPagina,
       };
-      // Incluir busca se a API suportar (exemplo comentado)
-      // if (filters.search) {
-      //   currentFilters.search = filters.search;
-      // }
 
       const campaignsData = await campaignService.getMonitoredCampaigns(currentFilters);
       setCampaigns(campaignsData || []);
@@ -63,11 +59,11 @@ const CampaignsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters.clientName, filters.monitoringStatus, filters.pagina, filters.tamanhoPagina]); // Dependências corretas
+  }, [filters.clientName, filters.monitoringStatus, filters.pagina, filters.tamanhoPagina]);
 
   useEffect(() => {
     loadData();
-  }, [loadData]); // Depende da função memoizada
+  }, [loadData]);
 
   const cleanFilters = (obj) => {
     const cleaned = {};
@@ -95,7 +91,6 @@ const CampaignsPage = () => {
      }));
   };
 
-
   const handleViewDetails = async (campaignId) => {
     try {
         setLoading(true);
@@ -114,8 +109,8 @@ const CampaignsPage = () => {
   };
 
   const handleViewHistory = (campaign) => {
-    setCampaignForHistory(campaign); // Define qual campanha será exibida no modal
-    setShowHistoryModal(true); // Abre o modal de histórico
+    setCampaignForHistory(campaign);
+    setShowHistoryModal(true);
   };
 
   const filteredCampaigns = campaigns.filter((campaign) => {
@@ -146,7 +141,6 @@ const CampaignsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Campanhas</h1>
@@ -171,7 +165,6 @@ const CampaignsPage = () => {
          />
        )}
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -248,18 +241,16 @@ const CampaignsPage = () => {
                            {campaign.monitoringStatus || '-'}
                         </Badge>
                       </td>
-                      {/* --- AJUSTE CÉLULA --- */}
                       <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">
                         {formatDateTime(campaign.lastCheckMonitoring) || '-'}
                       </td>
-                      {/* --- AJUSTE CÉLULA --- */}
                       <td className="py-3 px-4 text-center">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleViewDetails(campaign.id)}
                           title="Ver Detalhes"
-                          className="p-1" // Padding opcional
+                          className="p-1"
                         >
                           <Eye size={16} />
                         </Button>
@@ -275,12 +266,10 @@ const CampaignsPage = () => {
                 </div>
               )}
             </div>
-             {/* Adicionar Paginação */}
           </CardContent>
         </Card>
       )}
 
-      {/* Modal de Detalhes */}
       <CampaignModal
         isOpen={showModal}
         onClose={() => { setShowModal(false); setError(null); }}
@@ -303,26 +292,21 @@ const CampaignsPage = () => {
           )}
       </CampaignModal>
 
-      {/* Modal de Histórico de Execuções */}
       {campaignForHistory && (
         <ExecutionHistoryModal
           isOpen={showHistoryModal}
-          onClose={() => { setShowHistoryModal(false); setCampaignForHistory(null); }} // Limpa campaignForHistory ao fechar
+          onClose={() => { setShowHistoryModal(false); setCampaignForHistory(null); }}
           campaignId={campaignForHistory.id}
           campaignName={campaignForHistory.name}
         />
       )}
-
-
     </div>
   );
 };
 
-// Componente CampaignDetails (ajustado para usar formatNumber)
 const CampaignDetails = ({ campaign, onViewHistory }) => {
   return (
     <div className="space-y-6">
-      {/* Informações Básicas */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Informações Básicas</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -367,7 +351,6 @@ const CampaignDetails = ({ campaign, onViewHistory }) => {
         </div>
       </div>
 
-       {/* Informações de Monitoramento */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 border-t pt-4 mt-4">Monitoramento</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -406,7 +389,6 @@ const CampaignDetails = ({ campaign, onViewHistory }) => {
           </div>
         </div>
 
-      {/* Agendamento */}
       {campaign.scheduler && (
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 border-t pt-4 mt-4">Agendamento</h3>
@@ -435,7 +417,6 @@ const CampaignDetails = ({ campaign, onViewHistory }) => {
         </div>
       )}
 
-       {/* Métricas */}
        {campaign.metrics && (
          <div>
            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-t pt-4 mt-4">Métricas</h3>
@@ -460,12 +441,10 @@ const CampaignDetails = ({ campaign, onViewHistory }) => {
                <p className="text-sm text-gray-500 mb-1">Última Execução</p>
                <p className="font-medium text-sm text-gray-800">{formatDateTime(campaign.metrics.lastExecutionDate) || '-'}</p>
              </div>
-              {/* Adicionar tempo médio se necessário */}
            </div>
          </div>
        )}
 
-       {/* Botão para ver Execuções */}
         <div className="border-t pt-4 mt-4">
              <Button
                 variant="primary"
@@ -474,7 +453,6 @@ const CampaignDetails = ({ campaign, onViewHistory }) => {
                 Ver Histórico de Execuções
               </Button>
         </div>
-
     </div>
   );
 };

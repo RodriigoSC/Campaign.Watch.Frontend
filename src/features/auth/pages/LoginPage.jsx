@@ -1,8 +1,8 @@
+// src/features/auth/pages/LoginPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import Button from '../components/ui/Button';
-//import Input from '../components/ui/Input';
+import { useAuthStore } from '../../../store/authStore';
+import Button from '../../../shared/components/Button/Button';
 import { Lock, Mail } from 'lucide-react';
 
 const LoginPage = () => {
@@ -22,16 +22,11 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo e Título */}
         <div className="text-center mb-8">
-          {/*<div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4">
-            <span className="text-4xl font-bold text-primary-600">CW</span>
-          </div>*/}
           <h1 className="text-3xl font-bold text-white mb-2">Campaign Watch</h1>
           <p className="text-primary-100">Sistema de Monitoramento de Campanhas</p>
         </div>
 
-        {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
             Faça seu login
@@ -100,7 +95,6 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-sm text-primary-100">
             © 2025 Campaign Watch. Todos os direitos reservados.

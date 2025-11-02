@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Home, BarChart2, Users, Bell, Settings, ChevronsLeft, ChevronsRight } from 'lucide-react';
-import { cn } from '../../../utils';
+import { cn } from '../../../shared/utils';
 
 const navItems = [
   { to: '/dashboard', icon: Home, label: 'Dashboard' },

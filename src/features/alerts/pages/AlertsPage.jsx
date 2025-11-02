@@ -1,22 +1,16 @@
 // src/features/alerts/pages/AlertsPage.jsx
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Mail, MessageSquare, Bell, Trash2, Edit, RefreshCw } from 'lucide-react';
-// Imports corrigidos para 'shared/components'
 import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/Card/Card';
 import Button from '../../../shared/components/Button/Button';
 import Badge from '../../../shared/components/Badge/Badge';
-import CampaignModal from '../../../shared/components/Modal/Modal'; // Usando o Modal base
+import CampaignModal from '../../../shared/components/Modal/CampaignModal';
 import Input from '../../../shared/components/Input/Input';
 import Select from '../../../shared/components/Select/Select';
 import Loading from '../../../shared/components/Loading/Loading';
 import ErrorMessage from '../../../shared/components/ErrorMessage/ErrorMessage';
-
-// Importa o novo serviço
 import { alertService } from '../../../shared/services/alertService';
-import { formatDateTime } from '../../../utils'; // Assumindo que você tem formatDateTime em utils
-
-// (Componentes auxiliares getAlertIcon, getAlertTypeLabel, getConditionLabel permanecem os mesmos)
-// ... (Cole os auxiliares aqui) ...
+import { formatDateTime } from '../../../shared/utils';
 
 const getAlertIcon = (type) => {
     switch (type) {
@@ -26,18 +20,15 @@ const getAlertIcon = (type) => {
       default: return <Bell size={20} />;
     }
 };
-// ... (etc)
 
 const AlertsPage = () => {
-  // Estado para dados, loading e erro
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Estado para o modal
   const [showModal, setShowModal] = useState(false);
   const [editingAlert, setEditingAlert] = useState(null);
-  const [isSaving, setIsSaving] = useState(false); // Loading específico do modal
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -47,14 +38,13 @@ const AlertsPage = () => {
     isActive: true,
   });
 
-  // Função para carregar os alertas do serviço
   const loadAlerts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await alertService.getAllAlerts();
       setAlerts(data || []);
-    } catch (err)_ {
+    } catch (err) {
       console.error('Erro ao carregar alertas:', err);
       setError(err.message || 'Não foi possível buscar os alertas.');
     } finally {
@@ -62,7 +52,6 @@ const AlertsPage = () => {
     }
   }, []);
 
-  // Carrega os dados no mount do componente
   useEffect(() => {
     loadAlerts();
   }, [loadAlerts]);
@@ -95,17 +84,14 @@ const AlertsPage = () => {
     setError(null);
     try {
       if (editingAlert) {
-        // API real de atualização
         await alertService.updateAlert(editingAlert.id, formData);
       } else {
-        // API real de criação
         await alertService.createAlert(formData);
       }
       setShowModal(false);
-      loadAlerts(); // Recarrega a lista
+      loadAlerts();
     } catch (err) {
       console.error('Erro ao salvar alerta:', err);
-      // Exibe o erro (poderia ser num estado de erro do modal)
       alert(`Erro ao salvar: ${err.message}`);
     } finally {
       setIsSaving(false);
@@ -114,10 +100,9 @@ const AlertsPage = () => {
 
   const handleDeleteAlert = async (id) => {
     if (confirm('Tem certeza que deseja excluir este alerta?')) {
-      // Idealmente, desabilitar o botão enquanto deleta
       try {
         await alertService.deleteAlert(id);
-        loadAlerts(); // Recarrega a lista
+        loadAlerts();
       } catch (err) {
         console.error('Erro ao deletar alerta:', err);
         alert(`Erro ao deletar: ${err.message}`);
@@ -125,11 +110,8 @@ const AlertsPage = () => {
     }
   };
 
-  // ... (getAlertIcon, getAlertTypeLabel, getConditionLabel) ...
-
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Alertas</h1>
@@ -152,10 +134,6 @@ const AlertsPage = () => {
         </div>
       </div>
 
-      {/* Info Cards (Estes são OK, pois são derivados do estado 'alerts') */}
-      {/* ... (Cards de Total, Ativos, E-mail) ... */}
-
-      {/* Exibição de Loading ou Erro principal */}
       {loading && <Loading text="Carregando alertas..." />}
       {error && !loading && (
         <ErrorMessage
@@ -165,7 +143,6 @@ const AlertsPage = () => {
         />
       )}
 
-      {/* Alerts List */}
       {!loading && !error && (
         <Card>
           <CardHeader>
@@ -179,8 +156,6 @@ const AlertsPage = () => {
                     key={alert.id}
                     className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    {/* ... (Conteúdo do item da lista, usando getAlertIcon, etc.) ... */}
-                    {/* Exemplo de conteúdo do item: */}
                     <div className="flex items-center space-x-4 flex-1">
                       <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600">
                         {getAlertIcon(alert.type)}
@@ -195,7 +170,6 @@ const AlertsPage = () => {
                         </div>
                         
                         <div className="flex items-center space-x-4 text-sm text-gray-600">
-                           {/* ... (Tipo, Condição, Destino) ... */}
                            <span className="truncate" title={alert.recipient}>
                             <strong>Destino:</strong> {alert.recipient}
                           </span>
@@ -243,7 +217,6 @@ const AlertsPage = () => {
         </Card>
       )}
 
-      {/* Modal de Criação/Edição */}
       <CampaignModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
@@ -264,7 +237,6 @@ const AlertsPage = () => {
             options={[
               { value: 'email', label: 'E-mail' },
               { value: 'webhook', label: 'Webhook' },
-              // Adicione 'sms' se a API suportar
             ]}
           />
 
@@ -275,7 +247,6 @@ const AlertsPage = () => {
             options={[
               { value: 'error', label: 'Erro de Integração' },
               { value: 'delayed', label: 'Execução Atrasada' },
-              // ... (outras condições da API)
             ]}
           />
 

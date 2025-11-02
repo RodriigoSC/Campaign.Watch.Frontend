@@ -1,10 +1,11 @@
+// src/features/settings/pages/SettingsPage.jsx
 import { useState } from 'react';
 import { Save, User, Lock, Globe, Database } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
-import { useAuthStore } from '../store/authStore';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/Card/Card';
+import Button from '../../../shared/components/Button/Button';
+import Input from '../../../shared/components/Input/Input';
+import Select from '../../../shared/components/Select/Select';
+import { useAuthStore } from '../../../store/authStore';
 
 const SettingsPage = () => {
   const { user } = useAuthStore();
@@ -20,7 +21,6 @@ const SettingsPage = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simular salvamento
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsSaving(false);
     alert('Configurações salvas com sucesso!');
@@ -28,14 +28,12 @@ const SettingsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
         <p className="text-gray-600 mt-1">Gerencie as configurações do sistema</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar */}
         <Card className="lg:col-span-1">
           <CardContent className="pt-6">
             <nav className="space-y-2">
@@ -60,7 +58,6 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
-        {/* Content */}
         <div className="lg:col-span-3 space-y-6">
           {activeTab === 'profile' && <ProfileSettings user={user} onSave={handleSave} isSaving={isSaving} />}
           {activeTab === 'security' && <SecuritySettings onSave={handleSave} isSaving={isSaving} />}
@@ -72,7 +69,6 @@ const SettingsPage = () => {
   );
 };
 
-// Componente de Configurações de Perfil
 const ProfileSettings = ({ user, onSave, isSaving }) => {
   return (
     <Card>
@@ -107,7 +103,6 @@ const ProfileSettings = ({ user, onSave, isSaving }) => {
   );
 };
 
-// Componente de Configurações de Segurança
 const SecuritySettings = ({ onSave, isSaving }) => {
   return (
     <Card>
@@ -148,7 +143,6 @@ const SecuritySettings = ({ onSave, isSaving }) => {
   );
 };
 
-// Componente de Configurações do Sistema
 const SystemSettings = ({ onSave, isSaving }) => {
   return (
     <Card>
@@ -206,7 +200,6 @@ const SystemSettings = ({ onSave, isSaving }) => {
   );
 };
 
-// Componente de Configurações Gerais
 const GeneralSettings = ({ onSave, isSaving }) => {
   return (
     <Card>

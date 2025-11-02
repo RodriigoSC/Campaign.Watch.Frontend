@@ -1,10 +1,10 @@
+// src/features/layout/components/Header.jsx
 import { useState, useEffect, useRef } from 'react';
 import { LogOut, User, Bell } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import NotificationPanel from '../../../shared/components/';
+import NotificationPanel from './NotificationPanel';
 
-// Dados de exemplo para as notificações
 const mockNotifications = [
   { id: 1, type: 'error', title: 'Falha na Campanha #104', message: 'A campanha "Black Friday Antecipada" encontrou um erro de integração.', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), read: false },
   { id: 2, type: 'delayed', title: 'Execução Atrasada', message: 'A campanha de Inverno está com 1 hora de atraso na execução.', timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), read: false },
@@ -20,10 +20,8 @@ const Header = () => {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Lógica para fechar o painel ao clicar fora dele
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Verifica se o clique foi fora do elemento referenciado
       if (panelRef.current && !panelRef.current.contains(event.target)) {
         setIsPanelOpen(false);
       }
@@ -44,7 +42,6 @@ const Header = () => {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="px-6 py-1.5">
         <div className="flex items-center justify-between">
-          {/* Logo e Título */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-800 rounded-lg flex items-center justify-center">
@@ -57,9 +54,7 @@ const Header = () => {
             </div>
           </div>
 
-          {/* User Menu */}
           <div className="flex items-center space-x-4">
-            {/* --- Container das Notificações --- */}
             <div className="relative" ref={panelRef}>
               <button
                 onClick={() => setIsPanelOpen(!isPanelOpen)}
@@ -73,7 +68,6 @@ const Header = () => {
               {isPanelOpen && <NotificationPanel notifications={notifications} />}
             </div>
 
-            {/* User Info */}
             <div className="flex items-center space-x-3 px-3 py-2 rounded-lg bg-gray-50">
               <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
                 <User size={16} className="text-white" />
@@ -84,7 +78,6 @@ const Header = () => {
               </div>
             </div>
 
-            {/* Logout Button */}
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors"

@@ -1,15 +1,14 @@
+// src/shared/components/Modal/ExecutionHistoryModal.jsx
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import CampaignModal from './CampaignModal';
-import Loading from './Loading';
-import ErrorMessage from './ErrorMessage';
-import Badge from './Badge';
-import { ChevronDown, ChevronRight, AlertCircle, Clock, CheckCircle, Users, Send, Mail, MessageSquare, Smartphone } from 'lucide-react'; // Ícones adicionados/atualizados
+import Loading from '../Loading/Loading';
+import ErrorMessage from '../ErrorMessage/ErrorMessage';
+import Badge from '../Badge/Badge';
+import { ChevronDown, ChevronRight, AlertCircle, Clock, CheckCircle, Users, Send, Mail, MessageSquare, Smartphone } from 'lucide-react';
 import { campaignService } from '../../services/campaignService';
-import { formatDateTime, truncate, formatNumber } from '../../utils'; // formatNumber adicionado
-import { cn } from '../../utils';
+import { formatDateTime, truncate, formatNumber, cn } from '../../utils';
 
-// Mapeia o tipo de step para um ícone mais específico
 const stepIcons = {
   Filter: <Users size={16} className="text-blue-500" title="Filtro" />,
   Channel: <Send size={16} className="text-purple-500" title="Canal" />,
@@ -17,22 +16,18 @@ const stepIcons = {
   End: <CheckCircle size={16} className="text-green-500" title="Fim" />,
 };
 
-// Ícones específicos para canais (opcional, para mais detalhes visuais)
 const channelIcons = {
     EffectiveMail: <Mail size={12} className="inline mr-1 text-gray-500"/>,
     EffectiveSms: <MessageSquare size={12} className="inline mr-1 text-gray-500"/>,
     EffectivePush: <Smartphone size={12} className="inline mr-1 text-gray-500"/>,
-    EffectiveWhatsApp: <MessageSquare size={12} className="inline mr-1 text-green-500"/>, // Exemplo de cor diferente
-    // Adicione outros canais se necessário
+    EffectiveWhatsApp: <MessageSquare size={12} className="inline mr-1 text-green-500"/>,
 };
 
-// Componente para renderizar detalhes de um Step
 const StepDetails = ({ step }) => {
     const integration = step.integrationData;
     const leads = integration?.leads;
     const file = integration?.file;
 
-    // Função auxiliar para renderizar um item de detalhe
     const DetailItem = ({ label, value, className = '', isMono = false }) => (
         value !== null && value !== undefined && value !== '' && (
             <div className={`flex flex-col sm:flex-row sm:items-center ${className}`}>
@@ -46,12 +41,10 @@ const StepDetails = ({ step }) => {
 
     DetailItem.propTypes = { label: PropTypes.string, value: PropTypes.any, className: PropTypes.string, isMono: PropTypes.bool };
 
-
     return (
         <li key={step.originalStepId} className="flex items-start space-x-3 p-3 border border-gray-200 rounded bg-white shadow-sm">
             <span className="mt-0.5">{stepIcons[step.type] || <AlertCircle size={16} className="text-gray-400" />}</span>
             <div className="flex-1 min-w-0">
-                {/* Header do Step */}
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-2 pb-1 border-b border-gray-100">
                     <span className="font-semibold text-gray-800 text-sm truncate" title={step.name || step.type}>
                         {step.name || step.type}
@@ -60,7 +53,6 @@ const StepDetails = ({ step }) => {
                     <Badge status={step.status} className="mt-1 sm:mt-0">{step.status}</Badge>
                 </div>
 
-                {/* Informações Gerais do Step */}
                 <div className="space-y-1 text-xs mb-2">
                     <DetailItem label="Usuários" value={formatNumber(step.totalUser)} />
                     <DetailItem label="Tempo Exec." value={formatDuration(step.totalExecutionTime)} />
@@ -78,7 +70,6 @@ const StepDetails = ({ step }) => {
                     )}
                 </div>
 
-                {/* Detalhes de Integração (para Canais) */}
                 {step.type === 'Channel' && integration && (
                     <div className="mt-2 text-gray-500 border-t border-gray-100 pt-2 space-y-1 text-[11px]">
                         <h5 className="font-medium text-gray-800 mb-1 text-xs">Integração Canal</h5>
@@ -88,7 +79,6 @@ const StepDetails = ({ step }) => {
                           className="text-xs" />
                         <DetailItem label="Status Canal" value={integration.integrationStatus || '-'} className="text-xs"/>
                         <DetailItem label="Template ID" value={integration.templateId} className="text-xs" isMono/>
-                        {/* Detalhes do Arquivo */}
                         {file && (
                            <div className='mt-1 pt-1 border-t border-dashed border-gray-200'>
                                 <DetailItem label="Arquivo" value={file.name || '-'} className="text-xs truncate" isMono/>
@@ -97,7 +87,6 @@ const StepDetails = ({ step }) => {
                                 <DetailItem label="Fim Proc." value={formatDateTime(file.finishedAt)} className="text-xs"/>
                            </div>
                         )}
-                         {/* Detalhes dos Leads */}
                         {leads && (
                             <div className='mt-1 pt-1 border-t border-dashed border-gray-200'>
                                 <span className="font-medium text-gray-700 block mb-0.5">Leads:</span>
@@ -121,8 +110,6 @@ StepDetails.propTypes = {
     step: PropTypes.object.isRequired,
 };
 
-
-// Função global formatDuration (pode ir para utils/index.js se preferir)
 const formatDuration = (seconds) => {
     if (seconds === null || seconds === undefined || isNaN(seconds)) return '-';
     if (seconds < 1) return '< 1s';
@@ -131,7 +118,6 @@ const formatDuration = (seconds) => {
     const remainingSeconds = (seconds % 60).toFixed(0);
     return `${minutes}m ${remainingSeconds}s`;
 };
-
 
 const ExecutionHistoryModal = ({ isOpen, onClose, campaignId, campaignName }) => {
   const [executions, setExecutions] = useState([]);
@@ -183,7 +169,7 @@ const ExecutionHistoryModal = ({ isOpen, onClose, campaignId, campaignName }) =>
       isOpen={isOpen}
       onClose={onClose}
       title={`Histórico de Execuções: ${truncate(campaignName, 40)}`}
-      size="4xl" // Mantido 4xl, ajuste se necessário
+      size="4xl"
     >
       {loading && <Loading text="Carregando histórico..." />}
       {error && !loading && (
@@ -250,17 +236,15 @@ const ExecutionHistoryModal = ({ isOpen, onClose, campaignId, campaignName }) =>
                         }
                       </td>
                     </tr>
-                    {/* Linha Expansível com Detalhes dos Steps */}
                     {expandedRowId === (exec.id || exec.originalExecutionId) && (
                       <tr className="bg-gray-50">
                         <td colSpan="8" className="p-0">
                           <div className="p-4 border-l-4 border-primary-200">
                             <h4 className="text-sm font-semibold mb-3 text-gray-700">Detalhes dos Steps ({exec.steps?.length || 0}):</h4>
                             {exec.steps && exec.steps.length > 0 ? (
-                              // Adicionado scroll interno para a lista de steps se for muito longa
                               <ul className="space-y-3 text-xs max-h-[40vh] overflow-y-auto pr-2">
                                 {exec.steps.map(step => (
-                                  <StepDetails key={step.originalStepId} step={step} /> // Usa o componente StepDetails
+                                  <StepDetails key={step.originalStepId} step={step} />
                                 ))}
                               </ul>
                             ) : (

@@ -3,7 +3,7 @@ import { Suspense, lazy } from 'react'; // Importa Suspense e lazy
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './features/auth/components/ProtectedRoute';
 import Layout from './features/layout/components/Layout';
-import Loading from './shared/components/Loading'; 
+import Loading from './shared/components/Loading/Loading'; 
 
 const LoginPage = lazy(() => import('./features/auth/pages/LoginPage'));
 
