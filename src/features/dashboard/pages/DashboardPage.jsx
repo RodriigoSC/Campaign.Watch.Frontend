@@ -22,7 +22,7 @@ import { dashboardService } from "../services/dashboardService";
 import { formatNumber, formatDateTime } from "../utils";
 import { clientService } from "../services/clientService";
 
-const Dashboard = () => {
+const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
@@ -425,4 +425,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default DashboardPage;

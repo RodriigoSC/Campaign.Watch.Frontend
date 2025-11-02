@@ -7,7 +7,7 @@ import CampaignModal from '../components/ui/CampaignModal';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 
-const Alerts = () => {
+const AlertsPage = () => {
   const [alerts, setAlerts] = useState([
     {
       id: 1,
@@ -301,4 +301,4 @@ const Alerts = () => {
   );
 };
 
-export default Alerts;
+export default AlertsPage;

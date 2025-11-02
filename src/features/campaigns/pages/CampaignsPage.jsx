@@ -15,7 +15,7 @@ import { campaignService } from '../services/campaignService';
 import { clientService } from '../services/clientService';
 import { formatDateTime, truncate, formatNumber } from '../utils';
 
-const Campaigns = () => {
+const CampaignsPage = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -484,4 +484,4 @@ CampaignDetails.propTypes = {
     onViewHistory: PropTypes.func.isRequired,
 };
 
-export default Campaigns;
+export default CampaignsPage;

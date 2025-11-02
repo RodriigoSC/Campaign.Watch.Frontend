@@ -14,7 +14,7 @@ import { clientService } from '../services/clientService';
 import { formatDateTime } from '../utils';
 import { useNavigate } from 'react-router-dom';
 
-const Clients = () => {
+const ClientsPage = () => {
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -352,4 +352,4 @@ const Clients = () => {
     );
 };
 
-export default Clients;
+export default ClientsPage;
