@@ -6,7 +6,7 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import { useAuthStore } from '../store/authStore';
 
-const Settings = () => {
+const SettingsPage = () => {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
@@ -275,4 +275,4 @@ const GeneralSettings = ({ onSave, isSaving }) => {
   );
 };
 
-export default Settings;
+export default SettingsPage;

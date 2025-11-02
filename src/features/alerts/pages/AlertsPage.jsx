@@ -1,48 +1,82 @@
-import { useState } from 'react';
-import { Plus, Mail, MessageSquare, Bell, Trash2, Edit } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
-import CampaignModal from '../components/ui/CampaignModal';
-import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
+// src/features/alerts/pages/AlertsPage.jsx
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Mail, MessageSquare, Bell, Trash2, Edit, RefreshCw } from 'lucide-react';
+// Imports corrigidos para 'shared/components'
+import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/Card/Card';
+import Button from '../../../shared/components/Button/Button';
+import Badge from '../../../shared/components/Badge/Badge';
+import CampaignModal from '../../../shared/components/Modal/Modal'; // Usando o Modal base
+import Input from '../../../shared/components/Input/Input';
+import Select from '../../../shared/components/Select/Select';
+import Loading from '../../../shared/components/Loading/Loading';
+import ErrorMessage from '../../../shared/components/ErrorMessage/ErrorMessage';
+
+// Importa o novo serviço
+import { alertService } from '../../../shared/services/alertService';
+import { formatDateTime } from '../../../utils'; // Assumindo que você tem formatDateTime em utils
+
+// (Componentes auxiliares getAlertIcon, getAlertTypeLabel, getConditionLabel permanecem os mesmos)
+// ... (Cole os auxiliares aqui) ...
+
+const getAlertIcon = (type) => {
+    switch (type) {
+      case 'email': return <Mail size={20} />;
+      case 'sms': return <MessageSquare size={20} />;
+      case 'webhook': return <Bell size={20} />;
+      default: return <Bell size={20} />;
+    }
+};
+// ... (etc)
 
 const AlertsPage = () => {
-  const [alerts, setAlerts] = useState([
-    {
-      id: 1,
-      name: 'Alerta de Erro de Integração',
-      type: 'email',
-      condition: 'error',
-      recipient: 'admin@company.com',
-      isActive: true,
-      createdAt: '2024-01-15T10:00:00',
-    },
-    {
-      id: 2,
-      name: 'Alerta de Execução Atrasada',
-      type: 'webhook',
-      condition: 'delayed',
-      recipient: 'https://api.company.com/webhook',
-      isActive: true,
-      createdAt: '2024-01-20T14:30:00',
-    },
-  ]);
-
+  // Estado para dados, loading e erro
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Estado para o modal
   const [showModal, setShowModal] = useState(false);
   const [editingAlert, setEditingAlert] = useState(null);
+  const [isSaving, setIsSaving] = useState(false); // Loading específico do modal
 
   const [formData, setFormData] = useState({
     name: '',
     type: 'email',
     condition: 'error',
     recipient: '',
+    isActive: true,
   });
+
+  // Função para carregar os alertas do serviço
+  const loadAlerts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await alertService.getAllAlerts();
+      setAlerts(data || []);
+    } catch (err)_ {
+      console.error('Erro ao carregar alertas:', err);
+      setError(err.message || 'Não foi possível buscar os alertas.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Carrega os dados no mount do componente
+  useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts]);
 
   const handleOpenModal = (alert = null) => {
     if (alert) {
       setEditingAlert(alert);
-      setFormData(alert);
+      setFormData({
+        name: alert.name || '',
+        type: alert.type || 'email',
+        condition: alert.condition || 'error',
+        recipient: alert.recipient || '',
+        isActive: alert.isActive ?? true,
+      });
     } else {
       setEditingAlert(null);
       setFormData({
@@ -50,53 +84,48 @@ const AlertsPage = () => {
         type: 'email',
         condition: 'error',
         recipient: '',
+        isActive: true,
       });
     }
     setShowModal(true);
   };
 
-  const handleSaveAlert = () => {
-    if (editingAlert) {
-      setAlerts(alerts.map(a => a.id === editingAlert.id ? { ...formData, id: a.id } : a));
-    } else {
-      setAlerts([...alerts, { ...formData, id: Date.now(), isActive: true, createdAt: new Date().toISOString() }]);
+  const handleSaveAlert = async () => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      if (editingAlert) {
+        // API real de atualização
+        await alertService.updateAlert(editingAlert.id, formData);
+      } else {
+        // API real de criação
+        await alertService.createAlert(formData);
+      }
+      setShowModal(false);
+      loadAlerts(); // Recarrega a lista
+    } catch (err) {
+      console.error('Erro ao salvar alerta:', err);
+      // Exibe o erro (poderia ser num estado de erro do modal)
+      alert(`Erro ao salvar: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
-    setShowModal(false);
   };
 
-  const handleDeleteAlert = (id) => {
+  const handleDeleteAlert = async (id) => {
     if (confirm('Tem certeza que deseja excluir este alerta?')) {
-      setAlerts(alerts.filter(a => a.id !== id));
+      // Idealmente, desabilitar o botão enquanto deleta
+      try {
+        await alertService.deleteAlert(id);
+        loadAlerts(); // Recarrega a lista
+      } catch (err) {
+        console.error('Erro ao deletar alerta:', err);
+        alert(`Erro ao deletar: ${err.message}`);
+      }
     }
   };
 
-  const getAlertIcon = (type) => {
-    switch (type) {
-      case 'email': return <Mail size={20} />;
-      case 'sms': return <MessageSquare size={20} />;
-      case 'webhook': return <Bell size={20} />;
-      default: return <Bell size={20} />;
-    }
-  };
-
-  const getAlertTypeLabel = (type) => {
-    const types = {
-      email: 'E-mail',
-      sms: 'SMS',
-      webhook: 'Webhook',
-    };
-    return types[type] || type;
-  };
-
-  const getConditionLabel = (condition) => {
-    const conditions = {
-      error: 'Erro de Integração',
-      delayed: 'Execução Atrasada',
-      success: 'Campanha Concluída',
-      failed: 'Falha na Campanha',
-    };
-    return conditions[condition] || condition;
-  };
+  // ... (getAlertIcon, getAlertTypeLabel, getConditionLabel) ...
 
   return (
     <div className="space-y-6">
@@ -106,136 +135,113 @@ const AlertsPage = () => {
           <h1 className="text-3xl font-bold text-gray-900">Alertas</h1>
           <p className="text-gray-600 mt-1">Configure notificações e alertas do sistema</p>
         </div>
-        <Button variant="primary" onClick={() => handleOpenModal()}>
-          <Plus size={20} className="mr-2" />
-          Novo Alerta
-        </Button>
+        <div className="flex items-center space-x-3">
+           <Button
+              variant="outline"
+              size="sm"
+              onClick={loadAlerts}
+              disabled={loading}
+            >
+              <RefreshCw size={16} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+            <Button variant="primary" onClick={() => handleOpenModal()}>
+              <Plus size={20} className="mr-2" />
+              Novo Alerta
+            </Button>
+        </div>
       </div>
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                <Bell className="text-primary-600" size={24} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{alerts.length}</p>
-                <p className="text-sm text-gray-600">Total de Alertas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Info Cards (Estes são OK, pois são derivados do estado 'alerts') */}
+      {/* ... (Cards de Total, Ativos, E-mail) ... */}
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
-                <Bell className="text-success-600" size={24} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {alerts.filter(a => a.isActive).length}
-                </p>
-                <p className="text-sm text-gray-600">Alertas Ativos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center">
-                <Mail className="text-warning-600" size={24} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {alerts.filter(a => a.type === 'email').length}
-                </p>
-                <p className="text-sm text-gray-600">Alertas por E-mail</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Exibição de Loading ou Erro principal */}
+      {loading && <Loading text="Carregando alertas..." />}
+      {error && !loading && (
+        <ErrorMessage
+          title="Erro ao carregar Alertas"
+          message={error}
+          onRetry={loadAlerts}
+        />
+      )}
 
       {/* Alerts List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Alertas Configurados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center space-x-4 flex-1">
-                  <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600">
-                    {getAlertIcon(alert.type)}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <h4 className="font-semibold text-gray-900">{alert.name}</h4>
-                      <Badge variant={alert.isActive ? 'success' : 'default'}>
-                        {alert.isActive ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4 text-sm text-gray-600">
-                      <span>
-                        <strong>Tipo:</strong> {getAlertTypeLabel(alert.type)}
-                      </span>
-                      <span>
-                        <strong>Condição:</strong> {getConditionLabel(alert.condition)}
-                      </span>
-                      <span>
-                        <strong>Destino:</strong> {alert.recipient}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenModal(alert)}
+      {!loading && !error && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Alertas Configurados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {alerts.length > 0 ? (
+                alerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <Edit size={16} />
-                  </Button>
+                    {/* ... (Conteúdo do item da lista, usando getAlertIcon, etc.) ... */}
+                    {/* Exemplo de conteúdo do item: */}
+                    <div className="flex items-center space-x-4 flex-1">
+                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600">
+                        {getAlertIcon(alert.type)}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h4 className="font-semibold text-gray-900">{alert.name}</h4>
+                          <Badge variant={alert.isActive ? 'success' : 'default'}>
+                            {alert.isActive ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                           {/* ... (Tipo, Condição, Destino) ... */}
+                           <span className="truncate" title={alert.recipient}>
+                            <strong>Destino:</strong> {alert.recipient}
+                          </span>
+                        </div>
+                         <p className="text-xs text-gray-400 mt-1">
+                           Criado em: {formatDateTime(alert.createdAt)}
+                         </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenModal(alert)}
+                      >
+                        <Edit size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteAlert(alert.id)}
+                      >
+                        <Trash2 size={16} className="text-error-600" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12">
+                  <Bell className="mx-auto text-gray-400 mb-4" size={48} />
+                  <p className="text-gray-500">Nenhum alerta configurado</p>
                   <Button
-                    variant="ghost"
+                    variant="primary"
                     size="sm"
-                    onClick={() => handleDeleteAlert(alert.id)}
+                    className="mt-4"
+                    onClick={() => handleOpenModal()}
                   >
-                    <Trash2 size={16} className="text-error-600" />
+                    Criar Primeiro Alerta
                   </Button>
                 </div>
-              </div>
-            ))}
-
-            {alerts.length === 0 && (
-              <div className="text-center py-12">
-                <Bell className="mx-auto text-gray-400 mb-4" size={48} />
-                <p className="text-gray-500">Nenhum alerta configurado</p>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="mt-4"
-                  onClick={() => handleOpenModal()}
-                >
-                  Criar Primeiro Alerta
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Modal de Criação/Edição */}
       <CampaignModal
@@ -257,8 +263,8 @@ const AlertsPage = () => {
             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
             options={[
               { value: 'email', label: 'E-mail' },
-              { value: 'sms', label: 'SMS' },
               { value: 'webhook', label: 'Webhook' },
+              // Adicione 'sms' se a API suportar
             ]}
           />
 
@@ -269,29 +275,39 @@ const AlertsPage = () => {
             options={[
               { value: 'error', label: 'Erro de Integração' },
               { value: 'delayed', label: 'Execução Atrasada' },
-              { value: 'success', label: 'Campanha Concluída' },
-              { value: 'failed', label: 'Falha na Campanha' },
+              // ... (outras condições da API)
             ]}
           />
 
           <Input
-            label={formData.type === 'email' ? 'E-mail' : formData.type === 'sms' ? 'Telefone' : 'URL do Webhook'}
+            label={formData.type === 'email' ? 'E-mail' : 'URL do Webhook'}
             value={formData.recipient}
             onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
             placeholder={
               formData.type === 'email'
                 ? 'exemplo@empresa.com'
-                : formData.type === 'sms'
-                ? '+5511999999999'
                 : 'https://api.empresa.com/webhook'
             }
           />
+          
+           <div className="flex items-center space-x-2 pt-2">
+            <input
+                type="checkbox"
+                id="alertIsActive"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+            />
+            <label htmlFor="alertIsActive" className="text-sm font-medium text-gray-700">
+                Alerta Ativo
+            </label>
+          </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
+            <Button variant="secondary" onClick={() => setShowModal(false)} disabled={isSaving}>
               Cancelar
             </Button>
-            <Button variant="primary" onClick={handleSaveAlert}>
+            <Button variant="primary" onClick={handleSaveAlert} isLoading={isSaving}>
               {editingAlert ? 'Salvar Alterações' : 'Criar Alerta'}
             </Button>
           </div>

@@ -5,7 +5,7 @@ import Button from '../components/ui/Button';
 //import Input from '../components/ui/Input';
 import { Lock, Mail } from 'lucide-react';
 
-const Login = () => {
+const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading, error } = useAuthStore();
@@ -111,4 +111,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default LoginPage;
