@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Button from './Button';
+import Button from '../../../shared/components/Button';
 import { AlertTriangle } from 'lucide-react';
 
 const DISCLAIMER_KEY = 'disclaimerAccepted';

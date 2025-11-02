@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Search, Eye, RefreshCw } from 'lucide-react'; // Ícone Filter removido
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import Select from '../components/ui/Select';
-import Badge from '../components/ui/Badge';
-import Loading from '../components/ui/Loading';
-import CampaignModal from '../components/ui/CampaignModal';
-import ErrorMessage from '../components/ui/ErrorMessage';
-import ExecutionHistoryModal from '../components/ui/ExecutionHistoryModal'; 
-import { campaignService } from '../services/campaignService';
-import { clientService } from '../services/clientService';
-import { formatDateTime, truncate, formatNumber } from '../utils';
+import { Search, Eye, RefreshCw } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/Card';
+import Button from '../../../shared/components/Button';
+import Input from '../../../shared/components/Input';
+import Select from '../../../shared/components/Select';
+import Badge from '../../../shared/components/Badge';
+import Loading from '../../../shared/components/Loading';
+import CampaignModal from '../../../shared/components/Modals/CampaignModal';
+import ErrorMessage from '../../../shared/components/ErrorMessage';
+import ExecutionHistoryModal from '../../../shared/components/Modals/ExecutionHistoryModal'; 
+import { campaignService } from '../../../shared/services/campaignService';
+import { clientService } from '../../../shared/services/clientService';
+import { formatDateTime, truncate, formatNumber } from '../../../shared/utils';
 
 const CampaignsPage = () => {
   const [campaigns, setCampaigns] = useState([]);

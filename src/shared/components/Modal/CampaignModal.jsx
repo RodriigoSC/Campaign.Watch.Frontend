@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { cn } from '../../utils';
 
-const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+const CampaignModal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   if (!isOpen) return null;
 
   const sizes = {
@@ -55,7 +55,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   );
 };
 
-Modal.propTypes = {
+CampaignModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   title: PropTypes.string,
@@ -63,4 +63,4 @@ Modal.propTypes = {
   size: PropTypes.oneOf(['sm', 'md', 'lg', 'xl', '2xl', '3xl']),
 };
 
-export default Modal;
+export default CampaignModal;

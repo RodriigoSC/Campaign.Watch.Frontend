@@ -1,15 +1,10 @@
 // src/App.jsx
 import { Suspense, lazy } from 'react'; // Importa Suspense e lazy
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import Layout from './components/layout/Layout';
-import Loading from './shared/components/Loading/Loading'; // Importa um componente de loading
+import ProtectedRoute from './features/auth/components/ProtectedRoute';
+import Layout from './features/layout/components/Layout';
+import Loading from './shared/components/Loading'; 
 
-// --- Lazy Loading das Páginas ---
-// Isso melhora o carregamento inicial da aplicação,
-// baixando o código da página apenas quando ela é necessária.
-
-// Página de Login (fora do layout protegido)
 const LoginPage = lazy(() => import('./features/auth/pages/LoginPage'));
 
 // Páginas Protegidas (dentro do layout)

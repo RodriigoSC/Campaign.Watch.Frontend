@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { authService } from '../services/authService';
+import { authService } from '../shared/services/authService';
 
 // Estado inicial tenta pegar usuário e token do storage
 const initialUser = authService.getCurrentUser();

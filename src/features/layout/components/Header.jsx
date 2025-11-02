@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { LogOut, User, Bell } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import NotificationPanel from './NotificationPanel';
+import NotificationPanel from '../../../shared/components/';
 
 // Dados de exemplo para as notificações
 const mockNotifications = [
