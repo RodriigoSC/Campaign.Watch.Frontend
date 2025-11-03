@@ -2,11 +2,11 @@ import PropTypes from 'prop-types'; // 1. Importe o PropTypes
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const COLORS = {
-  'Concluído': '#22c55e',
+  'Completed': '#22c55e',
   'Em andamento': '#3b82f6',
   'Agendada': '#f59e0b',
   'Pendente': '#f59e0b',
-  'Falha': '#ef4444',
+  'Failed': '#ef4444',
   'Cancelada': '#ef4444',
 };
 

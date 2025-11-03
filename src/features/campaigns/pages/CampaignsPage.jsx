@@ -12,9 +12,20 @@ import Loading from '../../../shared/components/Loading/Loading';
 import CampaignModal from '../../../shared/components/Modal/CampaignModal';
 import ErrorMessage from '../../../shared/components/ErrorMessage/ErrorMessage';
 import ExecutionHistoryModal from '../../../shared/components/Modal/ExecutionHistoryModal'; 
+import Pagination from '../../../shared/components/Pagination/Pagination'; 
 import { campaignService } from '../../../shared/services/campaignService';
 import { clientService } from '../../../shared/services/clientService';
 import { formatDateTime, truncate, formatNumber } from '../../../shared/utils';
+
+// Função helper para formatar data para o input (YYYY-MM-DD)
+const formatDateForInput = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    return new Date(dateStr).toISOString().split('T')[0];
+  } catch (e) {
+    return '';
+  }
+};
 
 const CampaignsPage = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -27,12 +38,18 @@ const CampaignsPage = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [campaignForHistory, setCampaignForHistory] = useState(null);
 
+  // --- Novos estados para paginação ---
+  const [totalItems, setTotalItems] = useState(0);
+  const [tamanhoPagina, setTamanhoPagina] = useState(25); // Default page size
+
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
     clientName: searchParams.get('client') || '',
     monitoringStatus: searchParams.get('status') || '',
+    // --- Novos filtros de data ---
+    dataInicio: searchParams.get('dataInicio') || '',
+    dataFim: searchParams.get('dataFim') || '',
     pagina: parseInt(searchParams.get('page') || '1'),
-    tamanhoPagina: 50,
   });
 
   const loadData = useCallback(async () => {
@@ -40,18 +57,40 @@ const CampaignsPage = () => {
       setLoading(true);
       setError(null);
 
-      const clientsData = await clientService.getAllClients();
-      setClients(clientsData);
+      // Carrega clientes (poderia ser cacheado)
+      if (clients.length === 0) {
+          const clientsData = await clientService.getAllClients();
+          setClients(clientsData);
+      }
 
-      const currentFilters = {
+      // Constrói filtros para a API
+      const apiFilters = {
           clientName: filters.clientName,
           monitoringStatus: filters.monitoringStatus,
+          // Adiciona filtros de data se existirem
+          dataInicio: filters.dataInicio ? new Date(filters.dataInicio).toISOString() : null,
+          dataFim: filters.dataFim ? new Date(filters.dataFim).toISOString() : null,
           pagina: filters.pagina,
-          tamanhoPagina: filters.tamanhoPagina,
+          tamanhoPagina: tamanhoPagina,
       };
 
-      const campaignsData = await campaignService.getMonitoredCampaigns(currentFilters);
-      setCampaigns(campaignsData || []);
+      // --- Ajuste para resposta paginada ---
+      // Assumindo que a API retorna: { items: [], totalItems: 0 }
+      const response = await campaignService.getMonitoredCampaigns(apiFilters);
+      
+      if (response && typeof response === 'object' && Array.isArray(response.items)) {
+        setCampaigns(response.items || []);
+        setTotalItems(response.totalItems || 0);
+      } else if (Array.isArray(response)) {
+         // Fallback se a API retornar apenas o array (sem paginação)
+         setCampaigns(response);
+         setTotalItems(response.length); 
+         console.warn("API não retornou objeto de paginação esperado.");
+      } else {
+         setCampaigns([]);
+         setTotalItems(0);
+      }
+      // --- Fim do ajuste ---
 
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
@@ -59,7 +98,8 @@ const CampaignsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters.clientName, filters.monitoringStatus, filters.pagina, filters.tamanhoPagina]);
+  // Atualiza dependências do useCallback
+  }, [filters, tamanhoPagina, clients.length]);
 
   useEffect(() => {
     loadData();
@@ -68,10 +108,11 @@ const CampaignsPage = () => {
   const cleanFilters = (obj) => {
     const cleaned = {};
     for (const key in obj) {
-      if ((key === 'pagina' && obj[key] === 1) || (obj[key] !== null && obj[key] !== undefined && obj[key] !== '')) {
-         if (key !== 'tamanhoPagina') {
-             cleaned[key] = obj[key];
-         }
+      // Remove chaves 'tamanhoPagina' e 'pagina' se for 1
+      if (key === 'pagina' && obj[key] === 1) continue;
+      
+      if (obj[key] !== null && obj[key] !== undefined && obj[key] !== '') {
+         cleaned[key] = obj[key];
       }
     }
     return cleaned;
@@ -84,12 +125,24 @@ const CampaignsPage = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     const resetPage = (name !== 'pagina');
+    
     setFilters(prev => ({
         ...prev,
         [name]: value,
-        ...(resetPage && { pagina: 1 })
+        ...(resetPage && { pagina: 1 }) // Reseta para página 1 ao mudar filtros
      }));
   };
+
+  // --- Handlers para Paginação ---
+  const handlePageChange = (newPage) => {
+    setFilters(prev => ({ ...prev, pagina: newPage }));
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setTamanhoPagina(newSize);
+    setFilters(prev => ({ ...prev, pagina: 1 })); // Reseta para página 1
+  };
+  // --- Fim Handlers Paginação ---
 
   const handleViewDetails = async (campaignId) => {
     try {
@@ -113,6 +166,7 @@ const CampaignsPage = () => {
     setShowHistoryModal(true);
   };
 
+  // Aplica o filtro de busca (search) localmente no resultado paginado
   const filteredCampaigns = campaigns.filter((campaign) => {
     const searchTerm = filters.search.toLowerCase();
     return !searchTerm ||
@@ -130,7 +184,7 @@ const CampaignsPage = () => {
   ];
 
   const statusOptions = [
-    { value: '', label: 'Todos os Status (Monitoramento)' },
+    { value: '', label: 'Todos os Status' },
     { value: 'Pending', label: 'Pendente' },
     { value: 'InProgress', label: 'Em andamento' },
     { value: 'WaitingForNextExecution', label: 'Aguardando próxima execução' },
@@ -138,6 +192,9 @@ const CampaignsPage = () => {
     { value: 'Failed', label: 'Falha' },
     { value: 'ExecutionDelayed', label: 'Execução atrasada' },
   ];
+
+  // Calcula total de páginas para o componente Pagination
+  const totalPages = Math.ceil(totalItems / tamanhoPagina);
 
   return (
     <div className="space-y-6">
@@ -166,29 +223,62 @@ const CampaignsPage = () => {
        )}
 
       <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative md:col-span-1">
+        <CardContent className="pt-6"> {/* Ajustei o padding para pt-6 como no original */}
+          {/* Grid de filtros atualizada */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {/* Filtro de Busca */}
+            <div className="relative md:col-span-3 lg:col-span-5">
+              {/* O Input de busca não precisa de label, pois o ícone e o placeholder são suficientes */}
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <Input
                 name="search"
-                placeholder="Buscar por Nome, ID Original ou Número..."
+                placeholder="Buscar por Nome, ID Original ou Número (filtra resultados da página atual)..."
                 value={filters.search}
                 onChange={handleFilterChange}
                 className="pl-10"
               />
             </div>
+            
+            {/* Filtro de Cliente */}
             <Select
+              label="Cliente"
               name="clientName"
               options={clientOptions}
               value={filters.clientName}
               onChange={handleFilterChange}
+              className="lg:col-span-2"
             />
+            
+            {/* Filtro de Status */}
             <Select
+              label="Status (Monitoramento)" 
               name="monitoringStatus"
               options={statusOptions}
               value={filters.monitoringStatus}
               onChange={handleFilterChange}
+              className="lg:col-span-1"
+            />
+            
+            {/* --- Filtro de Data Início --- */}
+            <Input
+              id="dataInicio"
+              label="Data Início"
+              type="date"
+              name="dataInicio"
+              value={formatDateForInput(filters.dataInicio)}
+              onChange={handleFilterChange}
+              className="lg:col-span-1"
+            />
+
+            {/* --- Filtro de Data Fim --- */}
+            <Input
+              id="dataFim"
+              label="Data Fim"
+              type="date"
+              name="dataFim"
+              value={formatDateForInput(filters.dataFim)}
+              onChange={handleFilterChange}
+              className="lg:col-span-1"
             />
           </div>
         </CardContent>
@@ -200,7 +290,8 @@ const CampaignsPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {filteredCampaigns.length} {filteredCampaigns.length === 1 ? 'Campanha encontrada' : 'Campanhas encontradas'}
+              {/* Exibe o total de itens do servidor, não apenas os filtrados localmente */}
+              Exibindo {filteredCampaigns.length} de {totalItems} {totalItems === 1 ? 'campanha encontrada' : 'campanhas encontradas'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -220,6 +311,7 @@ const CampaignsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
+                  {/* Usa a lista filtrada localmente */}
                   {filteredCampaigns.map((campaign) => (
                     <tr key={campaign.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 text-sm text-gray-900 font-medium">#{campaign.numberId}</td>
@@ -266,6 +358,20 @@ const CampaignsPage = () => {
                 </div>
               )}
             </div>
+
+            {/* --- Renderiza o componente de Paginação --- */}
+            {totalItems > 0 && totalPages > 0 && (
+                <Pagination
+                    currentPage={filters.pagina}
+                    totalPages={totalPages}
+                    pageSize={tamanhoPagina}
+                    totalItems={totalItems}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                    pageSizeOptions={[10, 25, 50, 100, 150, 200]}
+                />
+            )}
+            
           </CardContent>
         </Card>
       )}
@@ -423,14 +529,17 @@ const CampaignDetails = ({ campaign, onViewHistory }) => {
            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
              <div>
                <p className="text-sm text-gray-500 mb-1">Total Execuções</p>
+               {/* Erro estava aqui */}
                <p className="font-semibold text-xl text-gray-800">{formatNumber(campaign.metrics.totalExecutions)}</p>
              </div>
              <div>
                <p className="text-sm text-gray-500 mb-1">Exec. Completas</p>
+               {/* Erro estava aqui */}
                <p className="font-semibold text-xl text-success-600">{formatNumber(campaign.metrics.completedExecutions)}</p>
              </div>
               <div>
                <p className="text-sm text-gray-500 mb-1">Exec. Com Falha</p>
+               {/* Erro estava aqui */}
                <p className="font-semibold text-xl text-error-600">{formatNumber(campaign.metrics.failedExecutions)}</p>
              </div>
               <div>

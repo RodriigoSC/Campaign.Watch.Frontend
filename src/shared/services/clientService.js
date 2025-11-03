@@ -95,5 +95,4 @@ export const clientService = {
     }
   },
 
-  // Adicione outras funções conforme necessário para interagir com o ClientController
 };

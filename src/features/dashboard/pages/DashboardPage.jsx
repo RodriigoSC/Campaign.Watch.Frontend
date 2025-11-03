@@ -1,6 +1,9 @@
 // src/features/dashboard/pages/DashboardPage.jsx
-import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../../shared/components/Card/Card";
+import { useState, useEffect, useCallback } from "react";
+// 1. Importar CardFooter (para conter a paginação) e o Pagination
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../../../shared/components/Card/Card";
+import Pagination from "../../../shared/components/Pagination/Pagination";
+// ---
 import { TrendingUp, AlertCircle, CheckCircle, Clock, RefreshCw } from "lucide-react";
 import GaugeChart from "../../../shared/components/Charts/GaugeChart";
 import StatusChart from "../../../shared/components/Charts/StatusChart";
@@ -8,9 +11,46 @@ import BarChart from "../../../shared/components/Charts/BarChart";
 import Loading from "../../../shared/components/Loading/Loading";
 import ErrorMessage from "../../../shared/components/ErrorMessage/ErrorMessage";
 import Button from "../../../shared/components/Button/Button";
+import Input from "../../../shared/components/Input/Input"; 
+import Select from "../../../shared/components/Select/Select"; 
 import { dashboardService } from "../../../shared/services/dashboardService";
 import { formatNumber, formatDateTime } from "../../../shared/utils";
 import { clientService } from "../../../shared/services/clientService";
+
+/**
+ * Formata um objeto Date para uma string YYYY-MM-DD
+ * (necessário para o valor padrão do input type="date")
+ */
+const formatDateForInput = (dateObj) => {
+  if (!dateObj) return '';
+  try {
+    // Usar métodos locais para evitar problemas de fuso horário (Timezone)
+    const year = dateObj.getFullYear();
+    // getMonth() é base 0 (0=Jan), por isso +1
+    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+    const day = dateObj.getDate().toString().padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  } catch (e) {
+    console.error("Erro ao formatar data para input:", e);
+    return '';
+  }
+};
+
+/**
+ * Define o estado inicial dos filtros (últimos 30 dias)
+ */
+const getInitialFilters = () => {
+  const today = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30); // Subtrai 30 dias
+
+  return {
+    clientName: 'all',
+    dataInicio: formatDateForInput(thirtyDaysAgo), // Data de 30 dias atrás
+    dataFim: formatDateForInput(today),         // Data de hoje
+  };
+};
 
 const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
@@ -18,7 +58,12 @@ const DashboardPage = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [clients, setClients] = useState([]);
-  const [selectedClient, setSelectedClient] = useState("all");
+  
+  const [filters, setFilters] = useState(getInitialFilters());
+  
+  // 2. Novo estado para controlar a paginação dos Problemas Recentes
+  const [recentIssuesPage, setRecentIssuesPage] = useState(1);
+  const ISSUES_PER_PAGE = 5; // 5 itens por página
 
   const healthLevelColors = {
     Healthy: "#22c55e",
@@ -27,42 +72,66 @@ const DashboardPage = () => {
     Inactive: "#6b7280",
   };
 
-  const loadDashboardData = async (clientName = null) => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await dashboardService.getDashboardData(clientName);
+
+      const apiFilters = {
+        clientName: filters.clientName === 'all' ? null : filters.clientName,
+        dataInicio: filters.dataInicio ? new Date(filters.dataInicio + 'T00:00:00').toISOString() : null,
+        dataFim: filters.dataFim ? new Date(filters.dataFim + 'T23:59:59').toISOString() : null,
+      };
+
+      const data = await dashboardService.getDashboardData(apiFilters);
       console.log("API Data Received:", data);
       setDashboardData(data);
       setLastUpdate(new Date());
+      
+      // 3. Resetar a página dos problemas para 1 a cada nova busca
+      setRecentIssuesPage(1);
+
     } catch (err) {
       console.error("Erro ao carregar dashboard:", err);
       setError(err.message || "Erro ao carregar dados do dashboard");
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]); // Depende do estado 'filters'
 
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
       const data = await clientService.getAllClients();
-      setClients(data);
+      setClients(data || []);
     } catch (err) {
       console.error("Erro ao carregar clientes:", err);
     }
-  };
+  }, []); // Vazio, executa apenas uma vez
+
+  useEffect(() => {
+    loadClients();
+  }, [loadClients]);
 
   useEffect(() => {
     loadDashboardData();
-    loadClients();
-  }, []);
+  }, [loadDashboardData]); 
 
-  const handleRefresh = () => {
-    const client = selectedClient === "all" ? null : selectedClient;
-    loadDashboardData(client);
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  console.log("Dashboard State Updated:", dashboardData);
+  const handleRefresh = () => {
+    loadDashboardData();
+  };
+
+  // 4. Handler para atualizar a página dos problemas (client-side)
+  const handleIssuesPageChange = (newPage) => {
+    setRecentIssuesPage(newPage);
+  };
 
   if (loading) {
     return <Loading size="lg" text="Carregando dashboard..." />;
@@ -85,7 +154,7 @@ const DashboardPage = () => {
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <ErrorMessage
           title="Dados Indisponíveis"
-          message="Não foi possível carregar os dados do dashboard ou os dados estão incompletos. Verifique a conexão com a API."
+          message="Não foi possível carregar os dados do dashboard ou os dados estão incompletos."
           onRetry={handleRefresh}
         />
       </div>
@@ -107,10 +176,28 @@ const DashboardPage = () => {
       fill: healthLevelColors[item.healthLevel] || "#6b7280",
     })) || [];
 
-  console.log("Health Chart Data (Mapped):", healthChartData);
+  const clientOptions = [
+    { value: 'all', label: 'Todos os Clientes' },
+    ...clients.map(client => ({
+      value: client.name,
+      label: client.name
+    }))
+  ];
+
+  // 5. Lógica de paginação client-side para Problemas Recentes
+  const allRecentIssues = recentIssues || [];
+  const totalIssues = allRecentIssues.length;
+  const totalIssuePages = Math.ceil(totalIssues / ISSUES_PER_PAGE);
+  
+  // "Corta" o array completo para pegar apenas os 5 itens da página atual
+  const paginatedIssues = allRecentIssues.slice(
+    (recentIssuesPage - 1) * ISSUES_PER_PAGE, // Início
+    recentIssuesPage * ISSUES_PER_PAGE       // Fim
+  );
 
   return (
     <div className="space-y-6">
+      {/* --- SEÇÃO DO TÍTULO --- */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -120,49 +207,50 @@ const DashboardPage = () => {
               : "Carregando..."}
           </p>
         </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="clientSelect"
-              className="text-gray-700 font-medium whitespace-nowrap"
-            >
-              Cliente:
-            </label>
-            <select
-              id="clientSelect"
-              value={selectedClient}
-              onChange={(e) => {
-                const client = e.target.value === "all" ? null : e.target.value;
-                setSelectedClient(e.target.value);
-                loadDashboardData(client);
-              }}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-colors"
-            >
-              <option value="all">Todos</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.name}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            <RefreshCw
-              size={16}
-              className={`mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            Atualizar
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={loading}
+        >
+          <RefreshCw
+            size={16}
+            className={`mr-2 ${loading ? "animate-spin" : ""}`}
+          />
+          Atualizar
+        </Button>
       </div>
 
+      {/* --- CARD DE FILTROS --- */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Select
+              label="Cliente"
+              name="clientName"
+              options={clientOptions}
+              value={filters.clientName}
+              onChange={handleFilterChange}
+            />
+            <Input
+              label="Data Início"
+              name="dataInicio"
+              type="date"
+              value={filters.dataInicio}
+              onChange={handleFilterChange}
+            />
+            <Input
+              label="Data Fim"
+              name="dataFim"
+              type="date"
+              value={filters.dataFim}
+              onChange={handleFilterChange}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* --- CARDS DE RESUMO --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardContent className="pt-6">
@@ -220,7 +308,7 @@ const DashboardPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Execuções Hoje
+                  Execuções no Período
                 </p>
                 <p className="text-3xl font-bold text-primary-600 mt-2">
                   {formatNumber(summary?.totalExecutionsToday ?? 0)}
@@ -238,6 +326,7 @@ const DashboardPage = () => {
         </Card>
       </div>
 
+      {/* --- GRÁFICOS --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-1 flex flex-col justify-between">
           <CardHeader className="pb-2">
@@ -269,6 +358,7 @@ const DashboardPage = () => {
         </Card>
       </div>
 
+      {/* --- GRÁFICOS E LISTAS (LINHA INFERIOR) --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -325,14 +415,16 @@ const DashboardPage = () => {
         </Card>
       </div>
 
-      {recentIssues && recentIssues.length > 0 && (
+      {/* --- PROBLEMAS RECENTES (COM PAGINAÇÃO) --- */}
+      {allRecentIssues && allRecentIssues.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Problemas Recentes</CardTitle>
+            <CardTitle>Problemas Recentes ({totalIssues})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {recentIssues.slice(0, 10).map((issue) => (
+            {/* 6. Mapear 'paginatedIssues' (o array cortado) */}
+            <div className="space-y-3">
+              {paginatedIssues.map((issue) => (
                 <div
                   key={issue.campaignId + issue.detectedAt || Math.random()}
                   className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
@@ -380,6 +472,24 @@ const DashboardPage = () => {
               ))}
             </div>
           </CardContent>
+
+          {/* 7. Adicionar o Footer com o componente de Paginação */}
+          {totalIssuePages > 1 && (
+            <CardFooter>
+              <Pagination
+                currentPage={recentIssuesPage}
+                totalPages={totalIssuePages}
+                totalItems={totalIssues}
+                pageSize={ISSUES_PER_PAGE}
+                onPageChange={handleIssuesPageChange}
+                // Ocultamos o seletor "por página" e info, pois é client-side
+                showPageSizeSelector={false} 
+                showPageInfo={false}
+                // Prop obrigatória, passamos uma função vazia
+                onPageSizeChange={() => {}} 
+              />
+            </CardFooter>
+          )}
         </Card>
       )}
     </div>

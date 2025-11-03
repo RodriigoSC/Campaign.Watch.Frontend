@@ -18,15 +18,14 @@ const buildQueryString = (params) => {
 export const dashboardService = {
   /**
    * Obtém os dados consolidados do dashboard.
-   * @param {string} [clientName] - Nome opcional do cliente para filtrar os dados.
+   * @param {object} [filters] - Objeto com filtros (clientName, dataInicio, dataFim).
    * @returns {Promise<object>} Dados do dashboard.
    */
-  getDashboardData: async (clientName = null) => {
+  getDashboardData: async (filters = {}) => {
     try {
-      const params = { clientName };
-      const queryString = buildQueryString(params);
+      const queryString = buildQueryString(filters);
       const response = await api.get(`/MonitoringDashboard?${queryString}`);
-      return response;
+      return response; 
     } catch (error) {
       console.error('Erro ao buscar dados do dashboard:', error);
       throw error;
