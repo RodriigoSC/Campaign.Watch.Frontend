@@ -85,14 +85,7 @@ const LoginPage = () => {
             >
               Entrar
             </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Credenciais de teste: <br />
-              <span className="font-medium">admin / admin</span>
-            </p>
-          </div>
+          </form>          
         </div>
 
         <div className="mt-8 text-center">

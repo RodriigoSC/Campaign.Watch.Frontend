@@ -1,17 +1,22 @@
 import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Home, BarChart2, Users, Bell, Settings, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Home, BarChart2, Users, Bell, Settings, ChevronsLeft, ChevronsRight, Shield } from 'lucide-react';
 import { cn } from '../../../shared/utils';
+import { useAuthStore } from '../../../store/authStore';
 
 const navItems = [
   { to: '/dashboard', icon: Home, label: 'Dashboard' },
   { to: '/campaigns', icon: BarChart2, label: 'Campanhas' },
   { to: '/clients', icon: Users, label: 'Clientes' },
   { to: '/alerts', icon: Bell, label: 'Alertas' },
-  { to: '/settings', icon: Settings, label: 'Configurações' },
+  { to: '/users', icon: Shield, label: 'Usuários', adminOnly: true },
+  { to: '/settings', icon: Settings, label: 'Configurações', adminOnly: false },
 ];
 
 const Sidebar = ({ isCollapsed, toggleSidebar }) => {
+  const { user } = useAuthStore();
+
+  const isAdmin = user?.Role === 'Admin' || user?.role === 'Admin';
   return (
     <aside
       className={cn(
@@ -29,7 +34,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
       {/* Navegação Principal */}
       <nav className="flex-grow px-2 py-4">
         <ul>
-          {navItems.map((item) => (
+          {navItems.filter(item => !item.adminOnly || (item.adminOnly && isAdmin)).map((item) => (
             <li key={item.to} className="relative">
               <NavLink
                 to={item.to}

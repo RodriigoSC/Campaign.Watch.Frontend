@@ -2,6 +2,7 @@
 import { Suspense, lazy } from 'react'; // Importa Suspense e lazy
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './features/auth/components/ProtectedRoute';
+import AdminRoute from './features/auth/components/AdminRoute';
 import Layout from './features/layout/components/Layout';
 import Loading from './shared/components/Loading/Loading'; 
 
@@ -13,6 +14,7 @@ const CampaignsPage = lazy(() => import('./features/campaigns/pages/CampaignsPag
 const ClientsPage = lazy(() => import('./features/clients/pages/ClientsPage'));
 const AlertsPage = lazy(() => import('./features/alerts/pages/AlertsPage'));
 const SettingsPage = lazy(() => import('./features/settings/pages/SettingsPage'));
+const UsersPage = lazy(() => import('./features/users/pages/UsersPage'));
 
 function App() {
   return (
@@ -39,7 +41,17 @@ function App() {
             <Route path="clients" element={<ClientsPage />} />
             <Route path="alerts" element={<AlertsPage />} />
             <Route path="settings" element={<SettingsPage />} />
-          </Route>
+          
+            {/* Rota de Admin */}
+              <Route 
+                path="users" 
+                element={
+                  <AdminRoute>
+                    <UsersPage />
+                  </AdminRoute>
+                } 
+              />
+            </Route>
 
           {/* Redireciona qualquer rota não encontrada para o dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
