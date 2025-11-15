@@ -1,8 +1,5 @@
 import api from './api';
 
-/**
- * Serviço para endpoints de /api/User (requerem role de Admin)
- */
 export const userService = {
   
   /**

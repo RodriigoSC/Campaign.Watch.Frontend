@@ -3,8 +3,6 @@ import api from './api';
 export const settingsService = {
   getSettings: async () => {
     try {
-      console.log('[SettingsService] GET /User/settings');
-      // O interceptor do api.js já retorna 'response.data'
       const response = await api.get('/User/settings'); 
       return response;
     } catch (error) {
@@ -13,11 +11,6 @@ export const settingsService = {
     }
   },
 
-  /**
-   * Salva uma seção específica das configurações.
-   * @param {string} section - 'profile', 'system', ou 'general'
-   * @param {object} data - Os dados a serem salvos.
-   */
   saveSettings: async (section, data) => {
     let endpoint = '';
     let payload = data;
@@ -33,11 +26,13 @@ export const settingsService = {
         break;
         
       case 'system':      
-        console.warn('Mock: [SettingsService] PUT /User/settings/system', data);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return { success: true };
+        endpoint = '/User/settings/system';
+        payload = data; 
+        break;
+      // --- FIM CORREÇÃO ---
         
       case 'general':
+        // TODO: Implementar este endpoint no backend também
         console.warn('Mock: [SettingsService] PUT /User/settings/general', data);
         await new Promise(resolve => setTimeout(resolve, 500));
         return { success: true };

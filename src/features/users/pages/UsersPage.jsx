@@ -10,8 +10,9 @@ import Input from '../../../shared/components/Input/Input';
 import Select from '../../../shared/components/Select/Select';
 import { userService } from '../../../shared/services/userService';
 import { formatDateTime } from '../../../shared/utils';
+import api from '../../../shared/services/api'; // 1. IMPORTAR O MÓDULO DE API
 
-// Opções de Role
+// Opções de Role (sem alteração)
 const roleOptions = [
   { value: 'User', label: 'Usuário (User)' },
   { value: 'Admin', label: 'Administrador (Admin)' },
@@ -26,7 +27,7 @@ const UsersPage = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Estado do formulário
+  // Estado do formulário (sem alteração)
   const [formData, setFormData] = useState({
     id: null,
     name: '',
@@ -41,6 +42,7 @@ const UsersPage = () => {
     setLoading(true);
     setError(null);
     try {
+      // O 'api.js' pode buscar do cache aqui na primeira carga
       const data = await userService.getAllUsers();
       setUsers(data || []);
     } catch (err) {
@@ -56,19 +58,19 @@ const UsersPage = () => {
 
   const handleOpenModal = (user = null) => {
     if (user) {
-      // Editando
+      // Editando (sem alteração)
       setEditingUser(user);
       setFormData({
         id: user.id,
         name: user.name || '',
         email: user.email || '',
-        password: '', // Senha não é preenchida na edição (deve ser endpoint separado)
+        password: '', 
         role: user.role || 'User',
         isActive: user.isActive ?? true,
-        phone: user.phone || '', // (Assumindo que virá da API)
+        phone: user.phone || '', 
       });
     } else {
-      // Criando
+      // Criando (sem alteração)
       setEditingUser(null);
       setFormData({
         id: null,
@@ -98,6 +100,14 @@ const UsersPage = () => {
           phone: formData.phone,
         };
         await userService.updateUser(formData.id, payload);
+        
+        // 2. ATUALIZAÇÃO OTIMISTA (UPDATE): Atualiza o usuário no estado local
+        setUsers(prev => 
+          prev.map(u => 
+            u.id === formData.id ? { ...u, ...payload, email: payload.email, name: payload.name, role: payload.role, isActive: payload.isActive, phone: payload.phone } : u
+          )
+        );
+
       } else {
         // Criando (DTO CreateUserRequest)
         const payload = {
@@ -106,10 +116,20 @@ const UsersPage = () => {
           password: formData.password,
           role: formData.role,
         };
-        await userService.createUser(payload);
+        
+        // 3. CAPTURAR RETORNO: A API (userService) retorna o usuário criado
+        const newUser = await userService.createUser(payload);
+        
+        // 4. ATUALIZAÇÃO OTIMISTA (CREATE): Adiciona o novo usuário ao estado local
+        setUsers(prev => [...prev, newUser]);
       }
+      
+      // 5. LIMPEZA DE CACHE: Garante que a próxima carga (F5 ou 'Atualizar') busque dados novos
+      api.clearCache();
+      
       setShowModal(false);
-      loadUsers(); // Recarrega a lista
+      // loadUsers(); // 6. REMOVIDO: Não é mais necessário, pois fizemos a atualização otimista
+      
     } catch (err) {
       setError(err.message || "Erro ao salvar usuário.");
     } finally {
@@ -119,16 +139,26 @@ const UsersPage = () => {
 
   const handleDelete = async (userId, userName) => {
     if (window.confirm(`Tem certeza que deseja excluir o usuário "${userName}"?`)) {
-      setLoading(true);
+      setLoading(true); // Usando 'setLoading' para o feedback geral da página
       try {
         await userService.deleteUser(userId);
-        loadUsers(); // Recarrega a lista
+        
+        // 7. ATUALIZAÇÃO OTIMISTA (DELETE): Remove o usuário do estado local
+        setUsers(prev => prev.filter(u => u.id !== userId));
+        
+        // 8. LIMPEZA DE CACHE:
+        api.clearCache(); 
+        
+        // loadUsers(); // 9. REMOVIDO:
       } catch (err) {
         setError(err.message || "Erro ao excluir usuário.");
-        setLoading(false); // Permite tentar novamente
+      } finally {
+        setLoading(false); // Desliga o loading geral
       }
     }
   };
+
+  // ... (Restante do JSX do componente 'return' não foi alterado) ...
 
   return (
     <div className="space-y-6">

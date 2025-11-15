@@ -114,6 +114,28 @@ const SecuritySettings = ({ onSave, isSaving }) => {
 
 
 const SystemSettings = ({ data, onSave, isSaving, onChange }) => {
+  
+  // 1. Busca as variáveis de ambiente (são "somente leitura")
+  const envData = {
+    apiUrl: import.meta.env.VITE_API_URL || "Não definida",
+    environment: import.meta.env.VITE_ENV || "Não definido",
+    cacheDuration: (parseInt(import.meta.env.VITE_CACHE_DURATION || 300000, 10) / 60000) + " min",
+    maxRetries: import.meta.env.VITE_MAX_RETRIES || "3",
+  };
+
+  // 2. Define o payload que será salvo (apenas o que o usuário pode mudar)
+  const handleSaveClick = () => {
+    const payload = {
+      refreshInterval: data.refreshInterval,
+      enableDetailedLogs: data.enableDetailedLogs,
+      debugMode: data.debugMode,
+      // Os campos abaixo não são enviados, pois são do .env
+      apiUrl: data.apiUrl, // O 'data' vem do BD, mas será ignorado pela API
+      timeout: data.timeout, // O 'data' vem do BD, mas será ignorado pela API
+    };
+    onSave('system', payload);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -121,36 +143,54 @@ const SystemSettings = ({ data, onSave, isSaving, onChange }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Input
-            label="URL da API"
-            value={data.apiUrl}
-            onChange={(e) => onChange('apiUrl', e.target.value)}
-          />
-
-          <Input
-            label="Timeout de Requisição (segundos)"
-            type="number"
-            value={data.timeout}
-            onChange={(e) => onChange('timeout', Number(e.target.value))}
-          />
-
-          <Select
-            label="Intervalo de Atualização"
-            value={data.refreshInterval}
-            onChange={(e) => onChange('refreshInterval', Number(e.target.value))}
-            options={[
-              { value: 1, label: '1 minuto' },
-              { value: 5, label: '5 minutos' },
-              { value: 10, label: '10 minutos' },
-              { value: 30, label: '30 minutos' },
-            ]}
-          />
           
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Logs e Diagnósticos</h3>
-            <div className="space-y-3">
+          {/* --- Seção de Variáveis de Ambiente (Somente Leitura) --- */}
+          <div className="border-b border-gray-200 pb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Ambiente (Somente Leitura)</h3>
+            <Input
+              label="URL da API (VITE_API_URL)"
+              value={envData.apiUrl}
+              readOnly
+              className="bg-gray-100"
+            />
+            <Input
+              label="Ambiente (VITE_ENV)"
+              value={envData.environment}
+              readOnly
+              className="bg-gray-100 mt-4"
+            />
+            <Input
+              label="Duração Cache (VITE_CACHE_DURATION)"
+              value={envData.cacheDuration}
+              readOnly
+              className="bg-gray-100 mt-4"
+            />
+            <Input
+              label="Tentativas (VITE_MAX_RETRIES)"
+              value={envData.maxRetries}
+              readOnly
+              className="bg-gray-100 mt-4"
+            />
+          </div>
+
+          {/* --- Seção de Preferências do Usuário (Editável) --- */}
+          <div className="pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Preferências do Usuário</h3>
+            <Select
+              label="Intervalo de Atualização (Dashboard)"
+              value={data.refreshInterval}
+              onChange={(e) => onChange('refreshInterval', Number(e.target.value))}
+              options={[
+                { value: 1, label: '1 minuto' },
+                { value: 5, label: '5 minutos' },
+                { value: 10, label: '10 minutos' },
+                { value: 30, label: '30 minutos' },
+              ]}
+            />
+            
+            <div className="space-y-3 mt-6">
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <label htmlFor="detailedLogs" className="text-sm font-medium cursor-pointer">Habilitar Logs Detalhados</label>
+                <label htmlFor="detailedLogs" className="text-sm font-medium cursor-pointer">Habilitar Logs Detalhados (Frontend)</label>
                 <input 
                   type="checkbox" 
                   id="detailedLogs" 
@@ -160,7 +200,7 @@ const SystemSettings = ({ data, onSave, isSaving, onChange }) => {
                 />
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <label htmlFor="debugMode" className="text-sm font-medium cursor-pointer">Modo Debug</label>
+                <label htmlFor="debugMode" className="text-sm font-medium cursor-pointer">Modo Debug (Frontend)</label>
                 <input 
                   type="checkbox" 
                   id="debugMode" 
@@ -173,9 +213,9 @@ const SystemSettings = ({ data, onSave, isSaving, onChange }) => {
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button variant="primary" onClick={() => onSave('system', data)} isLoading={isSaving}>
+            <Button variant="primary" onClick={handleSaveClick} isLoading={isSaving}>
               <Save size={16} className="mr-2" />
-              Salvar Alterações
+              Salvar Preferências
             </Button>
           </div>
         </div>

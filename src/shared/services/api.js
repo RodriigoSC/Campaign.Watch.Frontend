@@ -1,22 +1,34 @@
-// src/shared/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:5001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+if (!API_BASE_URL) {
+  console.error("ERRO FATAL: VITE_API_URL não está definida no arquivo .env");
+}
 
-// Cache simples em memória
+const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT 
+  ? parseInt(import.meta.env.VITE_API_TIMEOUT, 10) 
+  : 30000;
+
+const CACHE_DURATION = import.meta.env.VITE_CACHE_DURATION 
+  ? parseInt(import.meta.env.VITE_CACHE_DURATION, 10) 
+  : 5 * 60 * 1000;
+
+const MAX_RETRIES = import.meta.env.VITE_MAX_RETRIES
+  ? parseInt(import.meta.env.VITE_MAX_RETRIES, 10)
+  : 3; 
+
+
 const cache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
-// Configuração do axios
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: API_TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Helper para cache
+
 const getCachedData = (key) => {
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -33,7 +45,6 @@ const setCachedData = (key, data) => {
   });
 };
 
-// Limpar cache periodicamente
 setInterval(() => {
   const now = Date.now();
   for (const [key, value] of cache.entries()) {
@@ -43,16 +54,14 @@ setInterval(() => {
   }
 }, CACHE_DURATION);
 
-// Interceptor de requisição
+
 api.interceptors.request.use(
   (config) => {
-    // Adicionar token de autenticação
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Verificar cache para requisições GET
     if (config.method === 'get' && config.useCache !== false) {
       const cacheKey = `${config.url}?${JSON.stringify(config.params || {})}`;
       const cachedData = getCachedData(cacheKey);
@@ -67,7 +76,6 @@ api.interceptors.request.use(
       }
     }
 
-    // Log em desenvolvimento
     if (import.meta.env.DEV) {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, config.data || '');
     }
@@ -80,10 +88,8 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor de resposta com retry automático
 api.interceptors.response.use(
   (response) => {
-    // Salvar no cache se for GET
     if (response.config.method === 'get' && response.config.useCache !== false) {
       const cacheKey = `${response.config.url}?${JSON.stringify(response.config.params || {})}`;
       setCachedData(cacheKey, response.data);
@@ -98,7 +104,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Log do erro
     console.error('[API] Error:', {
       url: error.config?.url,
       method: error.config?.method,
@@ -107,26 +112,24 @@ api.interceptors.response.use(
       message: error.message,
     });
 
-    // Retry automático para erros de rede (máximo 3 tentativas)
     if (
-      error.code === 'ECONNABORTED' || 
-      error.message === 'Network Error'
+      (error.code === 'ECONNABORTED' || error.message === 'Network Error') &&
+      !originalRequest._isRetry
     ) {
-      originalRequest._retry = (originalRequest._retry || 0) + 1;
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      originalRequest._isRetry = true;
       
-      if (originalRequest._retry <= 3) {
-        console.log(`[API] Retrying request (${originalRequest._retry}/3)...`);
-        
-        // Aguardar antes de tentar novamente (backoff exponencial)
+      if (originalRequest._retryCount <= MAX_RETRIES) { 
+        console.log(`[API] Retrying request (${originalRequest._retryCount}/${MAX_RETRIES})...`);        
+     
         await new Promise(resolve => 
-          setTimeout(resolve, originalRequest._retry * 1000)
+          setTimeout(resolve, originalRequest._retryCount * 1000)
         );
         
         return api(originalRequest);
       }
     }
 
-    // Tratamento de autenticação
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -138,7 +141,6 @@ api.interceptors.response.use(
       return Promise.reject(new Error('Sessão expirada. Faça login novamente.'));
     }
 
-    // Formatação de mensagem de erro
     let errorMessage = 'Erro ao comunicar com o servidor.';
     
     if (error.response?.data) {
@@ -168,7 +170,9 @@ api.interceptors.response.use(
   }
 );
 
-// Função para limpar cache manualmente
+// --- Funções Utilitárias da API ---
+
+// Função para limpar cache manualmente (usada após POST/PUT/DELETE)
 api.clearCache = () => {
   cache.clear();
   console.log('[API] Cache cleared');

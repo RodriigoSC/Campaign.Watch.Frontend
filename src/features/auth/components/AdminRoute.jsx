@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import PropTypes from 'prop-types'; // 1. Importar PropTypes
 import { useAuthStore } from '../../../store/authStore';
 
 const AdminRoute = ({ children }) => {
@@ -9,13 +10,19 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (user?.Role !== 'Admin') { // Note: A API retorna 'Role' (PascalCase)
-    // 2. Está logado, MAS NÃO É ADMIN, manda para o dashboard (ou "acesso negado")
+  // Verificação de 'role' (camelCase)
+  if (user?.role !== 'Admin') { 
+    // 2. Está logado, MAS NÃO É ADMIN, manda para o dashboard
     return <Navigate to="/dashboard" replace />;
   }
 
   // 3. Está logado E É ADMIN
   return children;
+};
+
+// 2. Adicionar bloco de validação para 'children' para corrigir o erro do ESLint
+AdminRoute.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default AdminRoute;

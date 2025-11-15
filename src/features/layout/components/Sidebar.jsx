@@ -7,7 +7,7 @@ import { useAuthStore } from '../../../store/authStore';
 const navItems = [
   { to: '/dashboard', icon: Home, label: 'Dashboard' },
   { to: '/campaigns', icon: BarChart2, label: 'Campanhas' },
-  { to: '/clients', icon: Users, label: 'Clientes' },
+  { to: '/clients', icon: Users, label: 'Clientes', adminOnly: true },
   { to: '/alerts', icon: Bell, label: 'Alertas' },
   { to: '/users', icon: Shield, label: 'Usuários', adminOnly: true },
   { to: '/settings', icon: Settings, label: 'Configurações', adminOnly: false },
@@ -16,7 +16,7 @@ const navItems = [
 const Sidebar = ({ isCollapsed, toggleSidebar }) => {
   const { user } = useAuthStore();
 
-  const isAdmin = user?.Role === 'Admin' || user?.role === 'Admin';
+  const isAdmin = user?.role === 'Admin';
   return (
     <aside
       className={cn(
