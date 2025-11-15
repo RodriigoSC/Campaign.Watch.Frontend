@@ -261,6 +261,26 @@ export const toTitleCase = (str) => {
     .join(' ');
 };
 
+/**
+ * NOVO: Gera iniciais a partir de um nome.
+ * @param {string} name - O nome completo do usuário.
+ * @returns {string} As iniciais (1 ou 2 caracteres).
+ */
+export const getInitials = (name = '') => {
+  if (!name || typeof name !== 'string') return '?';
+  
+  // Remove partes vazias caso haja múltiplos espaços
+  const parts = name.split(' ').filter(part => part.length > 0);
+  
+  if (parts.length === 0) return '?';
+  
+  if (parts.length === 1) {
+    return parts[0][0].toUpperCase();
+  }
+  
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
 // ==========================================
 // Debounce e Throttle
 // ==========================================

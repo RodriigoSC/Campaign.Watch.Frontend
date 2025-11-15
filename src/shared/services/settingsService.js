@@ -1,8 +1,10 @@
+// src/shared/services/settingsService.js
 import api from './api';
 
 export const settingsService = {
   getSettings: async () => {
     try {
+      // Esta chamada agora retornará { profile: {...}, general: {...}, system: {...} }
       const response = await api.get('/User/settings'); 
       return response;
     } catch (error) {
@@ -18,6 +20,7 @@ export const settingsService = {
     switch(section) {
       case 'profile':
         endpoint = '/User/settings/profile';
+        // O payload para profile é específico (UpdateProfileSettingsRequest)
         payload = { 
           name: data.name, 
           email: data.email, 
@@ -25,15 +28,23 @@ export const settingsService = {
         };
         break;
         
+      // ATUALIZADO: Apontando para o endpoint real
       case 'system':      
         endpoint = '/User/settings/system';
+        // O payload é definido no componente (UpdateSystemSettingsRequest)
         payload = data; 
         break;
-      // --- FIM CORREÇÃO ---
         
+      // ATUALIZADO: Apontando para o endpoint real
       case 'general':
-        // TODO: Implementar este endpoint no backend também
-        console.warn('Mock: [SettingsService] PUT /User/settings/general', data);
+        endpoint = '/User/settings/general';
+        // O payload é o objeto 'data' (UpdateGeneralSettingsRequest)
+        payload = data;
+        break;
+
+      // A aba Segurança não tem API, então vamos mockar/avisar
+      case 'security':
+        console.warn('Mock: [SettingsService] PUT /User/settings/password (NÃO IMPLEMENTADO)', data);
         await new Promise(resolve => setTimeout(resolve, 500));
         return { success: true };
         
@@ -44,6 +55,11 @@ export const settingsService = {
     try {
       console.log(`[SettingsService] PUT ${endpoint}`, payload);
       await api.put(endpoint, payload);
+      
+      // BOA PRÁTICA: Limpar o cache da API para que o próximo GET (getSettings)
+      // busque os dados que acabamos de salvar.
+      api.clearCache(); 
+      
       return { success: true };
     } catch (error) {
       console.error(`Erro ao salvar configurações (${section}):`, error);

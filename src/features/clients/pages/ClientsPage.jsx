@@ -286,8 +286,8 @@ const ClientsPage = () => {
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="w-1/2 text-error-600 hover:bg-error-50"
+                    size="sm"                    
+                    className="w-1/2 text-error-600 hover:bg-red-500"
                     onClick={() => handleDeleteClient(client.id, client.name)}
                     disabled={loading}
                   >

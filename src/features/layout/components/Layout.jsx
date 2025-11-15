@@ -14,10 +14,15 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />
+      {/* A Sidebar agora só recebe o estado 'isCollapsed' */}
+      <Sidebar isCollapsed={isSidebarCollapsed} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        {/* O Header agora recebe o estado e a função de toggle */}
+        <Header 
+          isCollapsed={isSidebarCollapsed} 
+          toggleSidebar={toggleSidebar} 
+        />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
           <Outlet />
         </main>

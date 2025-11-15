@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Save, User, Lock, Globe, Database, CheckCircle } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../shared/components/Card/Card';
+import { Save, User, Lock, Database, CheckCircle, Palette } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../../shared/components/Card/Card';
 import Button from '../../../shared/components/Button/Button';
 import Input from '../../../shared/components/Input/Input';
 import Select from '../../../shared/components/Select/Select';
@@ -10,112 +10,154 @@ import ErrorMessage from '../../../shared/components/ErrorMessage/ErrorMessage';
 import { useAuthStore } from '../../../store/authStore';
 import { settingsService } from '../../../shared/services/settingsService';
 
-// Componente "dumb" para abas (sem alteração)
+// --- Abas de Navegação ---
 const tabs = [
-  { id: 'profile', name: 'Perfil', icon: User },
-  { id: 'security', name: 'Segurança', icon: Lock },
-  { id: 'system', name: 'Sistema', icon: Database },
-  { id: 'general', name: 'Geral', icon: Globe },
+  { id: 'profile', name: 'Perfil', icon: User, description: 'Gerencie suas informações pessoais e de contato.' },
+  { id: 'general', name: 'Geral', icon: Palette, description: 'Defina preferências de idioma, fuso horário e notificações.' },
+  { id: 'security', name: 'Segurança', icon: Lock, description: 'Altere sua senha e gerencie a autenticação.' },
+  { id: 'system', name: 'Sistema', icon: Database, description: 'Veja informações do ambiente e defina preferências de UI.' },
 ];
 
-// --- Componentes filhos (agora controlados) ---
+// --- Componente de Toggle (Switch) ---
+const ToggleSwitch = ({ id, label, description, checked, onChange, disabled = false }) => (
+  <div className="flex items-center justify-between">
+    <label htmlFor={id} className="flex flex-col flex-1 pr-4 cursor-pointer">
+      <span className="text-sm font-medium text-gray-900">{label}</span>
+      {description && <span className="text-sm text-gray-500">{description}</span>}
+    </label>
+    <button
+      id={id}
+      role="switch"
+      aria-checked={checked}
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
+        checked ? 'bg-primary-600' : 'bg-gray-200'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      <span
+        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+          checked ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  </div>
+);
 
+ToggleSwitch.propTypes = {
+  id: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+};
+
+
+// --- Componente: Aba de Perfil ---
 const ProfileSettings = ({ data, onSave, isSaving, onChange }) => {
+  
+  const handleSaveClick = () => {
+     const payload = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+     };
+     onSave('profile', payload);
+  };
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Informações do Perfil</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center space-x-4 mb-6">
+    <>
+      {/* Card 1: Foto de Perfil */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Foto de Perfil</CardTitle>
+          <p className="text-sm text-gray-500 mt-1">Atualize sua foto de perfil e avatar.</p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center space-x-4">
             <div className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center">
               <User size={32} className="text-white" />
             </div>
-            <div>
-              <Button variant="outline" size="sm">Alterar Foto</Button>
-            </div>
-          </div>
-
-          <Input 
-            label="Nome Completo" 
-            value={data.name} 
-            onChange={(e) => onChange('name', e.target.value)}
-          />
-          <Input 
-            label="E-mail" 
-            type="email" 
-            value={data.email}
-            onChange={(e) => onChange('email', e.target.value)} 
-          />
-          <Input 
-            label="Telefone" 
-            value={data.phone}
-            onChange={(e) => onChange('phone', e.target.value)} 
-          />
-          <Input 
-            label="Cargo" 
-            value={data.role}
-            readOnly
-            className="bg-gray-100"
-          />
-
-          <div className="flex justify-end pt-4">
-            <Button variant="primary" onClick={() => onSave('profile', data)} isLoading={isSaving}>
-              <Save size={16} className="mr-2" />
-              Salvar Alterações
+            <Button variant="outline" size="sm" disabled>
+              Carregar foto (Em breve)
             </Button>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      
+      {/* Card 2: Informações Pessoais */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações Pessoais</CardTitle>
+          <p className="text-sm text-gray-500 mt-1">Edite seu nome, e-mail e telefone.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input 
+              label="Nome Completo" 
+              value={data.name} 
+              onChange={(e) => onChange('profile', 'name', e.target.value)}
+            />
+            <Input 
+              label="E-mail" 
+              type="email" 
+              value={data.email}
+              onChange={(e) => onChange('profile', 'email', e.target.value)} 
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input 
+              label="Telefone" 
+              value={data.phone || ''}
+              placeholder="(XX) XXXXX-XXXX"
+              onChange={(e) => onChange('profile', 'phone', e.target.value)} 
+            />
+            <Input 
+              label="Cargo" 
+              value={data.role}
+              readOnly={true}
+              className="bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button variant="primary" onClick={handleSaveClick} isLoading={isSaving}>
+            <Save size={16} className="mr-2" />
+            Salvar Perfil
+          </Button>
+        </CardFooter>
+      </Card>
+    </>
   );
 };
 
+// --- Componente: Aba de Segurança ---
 const SecuritySettings = ({ onSave, isSaving }) => {
     return (
      <Card>
       <CardHeader>
-        <CardTitle>Segurança</CardTitle>
+        <CardTitle>Alterar Senha</CardTitle>
+        <p className="text-sm text-gray-500 mt-1">Funcionalidade de alteração de senha ainda não implementada.</p>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Alterar Senha</h3>
-            <div className="space-y-4">
-              <Input label="Senha Atual" type="password" />
-              <Input label="Nova Senha" type="password" />
-              <Input label="Confirmar Nova Senha" type="password" />
-            </div>
-          </div>
-          {/*
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Autenticação em Dois Fatores</h3>
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">Status</p>
-                <p className="text-sm text-gray-600">Desabilitado</p>
-              </div>
-              <Button variant="outline" size="sm">Habilitar</Button>
-            </div>
-          </div>
-          */}
-          <div className="flex justify-end pt-4">
-            <Button variant="primary" onClick={() => onSave('security', {})} isLoading={isSaving}>
-              <Save size={16} className="mr-2" />
-              Salvar Alterações
-            </Button>
-          </div>
-        </div>
+      <CardContent className="space-y-4 opacity-50">
+        <Input label="Senha Atual" type="password" disabled />
+        <Input label="Nova Senha" type="password" disabled />
+        <Input label="Confirmar Nova Senha" type="password" disabled />
       </CardContent>
+      <CardFooter className="flex justify-end">
+        <Button variant="primary" onClick={() => onSave('security', {})} isLoading={isSaving} disabled>
+          <Save size={16} className="mr-2" />
+          Salvar Alterações
+        </Button>
+      </CardFooter>
     </Card>
     );
 };
 
-
+// --- Componente: Aba de Sistema ---
 const SystemSettings = ({ data, onSave, isSaving, onChange }) => {
   
-  // 1. Busca as variáveis de ambiente (são "somente leitura")
   const envData = {
     apiUrl: import.meta.env.VITE_API_URL || "Não definida",
     environment: import.meta.env.VITE_ENV || "Não definido",
@@ -123,201 +165,184 @@ const SystemSettings = ({ data, onSave, isSaving, onChange }) => {
     maxRetries: import.meta.env.VITE_MAX_RETRIES || "3",
   };
 
-  // 2. Define o payload que será salvo (apenas o que o usuário pode mudar)
   const handleSaveClick = () => {
     const payload = {
-      refreshInterval: data.refreshInterval,
       enableDetailedLogs: data.enableDetailedLogs,
       debugMode: data.debugMode,
-      // Os campos abaixo não são enviados, pois são do .env
-      apiUrl: data.apiUrl, // O 'data' vem do BD, mas será ignorado pela API
-      timeout: data.timeout, // O 'data' vem do BD, mas será ignorado pela API
+      // refreshInterval foi removido
     };
     onSave('system', payload);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Configurações do Sistema</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          
-          {/* --- Seção de Variáveis de Ambiente (Somente Leitura) --- */}
-          <div className="border-b border-gray-200 pb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Ambiente (Somente Leitura)</h3>
-            <Input
-              label="URL da API (VITE_API_URL)"
-              value={envData.apiUrl}
-              readOnly
-              className="bg-gray-100"
-            />
+    <>
+      {/* Card 1: Preferências de Interface */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Preferências da Interface</CardTitle>
+          <p className="text-sm text-gray-500 mt-1">Ajuste o comportamento da interface de usuário.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ToggleSwitch
+            id="detailedLogs"
+            label="Habilitar Logs Detalhados"
+            description="Exibe logs detalhados no console (apenas front-end)."
+            checked={data.enableDetailedLogs}
+            onChange={(value) => onChange('system', 'enableDetailedLogs', value)}
+          />
+          <ToggleSwitch
+            id="debugMode"
+            label="Modo Debug"
+            description="Ativa recursos de depuração (apenas front-end)."
+            checked={data.debugMode}
+            onChange={(value) => onChange('system', 'debugMode', value)}
+          />
+        </CardContent>
+        <CardFooter className="flex justify-end">
+          <Button variant="primary" onClick={handleSaveClick} isLoading={isSaving}>
+            <Save size={16} className="mr-2" />
+            Salvar Preferências
+          </Button>
+        </CardFooter>
+      </Card>
+      
+      {/* Card 2: Ambiente (Somente Leitura) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Ambiente (Somente Leitura)</CardTitle>
+          <p className="text-sm text-gray-500 mt-1">Variáveis de ambiente injetadas no build do front-end.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Input
+            label="URL da API (VITE_API_URL)"
+            value={envData.apiUrl}
+            readOnly={true}
+            className="bg-gray-100 cursor-not-allowed"
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
               label="Ambiente (VITE_ENV)"
               value={envData.environment}
-              readOnly
-              className="bg-gray-100 mt-4"
+              readOnly={true}
+              className="bg-gray-100 cursor-not-allowed"
             />
             <Input
-              label="Duração Cache (VITE_CACHE_DURATION)"
+              label="Cache (VITE_CACHE_DURATION)"
               value={envData.cacheDuration}
-              readOnly
-              className="bg-gray-100 mt-4"
+              readOnly={true}
+              className="bg-gray-100 cursor-not-allowed"
             />
             <Input
               label="Tentativas (VITE_MAX_RETRIES)"
               value={envData.maxRetries}
-              readOnly
-              className="bg-gray-100 mt-4"
+              readOnly={true}
+              className="bg-gray-100 cursor-not-allowed"
             />
           </div>
-
-          {/* --- Seção de Preferências do Usuário (Editável) --- */}
-          <div className="pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Preferências do Usuário</h3>
-            <Select
-              label="Intervalo de Atualização (Dashboard)"
-              value={data.refreshInterval}
-              onChange={(e) => onChange('refreshInterval', Number(e.target.value))}
-              options={[
-                { value: 1, label: '1 minuto' },
-                { value: 5, label: '5 minutos' },
-                { value: 10, label: '10 minutos' },
-                { value: 30, label: '30 minutos' },
-              ]}
-            />
-            
-            <div className="space-y-3 mt-6">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <label htmlFor="detailedLogs" className="text-sm font-medium cursor-pointer">Habilitar Logs Detalhados (Frontend)</label>
-                <input 
-                  type="checkbox" 
-                  id="detailedLogs" 
-                  className="w-4 h-4" 
-                  checked={data.enableDetailedLogs}
-                  onChange={(e) => onChange('enableDetailedLogs', e.target.checked)}
-                />
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <label htmlFor="debugMode" className="text-sm font-medium cursor-pointer">Modo Debug (Frontend)</label>
-                <input 
-                  type="checkbox" 
-                  id="debugMode" 
-                  className="w-4 h-4" 
-                  checked={data.debugMode}
-                  onChange={(e) => onChange('debugMode', e.target.checked)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <Button variant="primary" onClick={handleSaveClick} isLoading={isSaving}>
-              <Save size={16} className="mr-2" />
-              Salvar Preferências
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </>
   );
 };
 
+// --- Componente: Aba Geral ---
 const GeneralSettings = ({ data, onSave, isSaving, onChange }) => {
+  
+  const handleSaveClick = () => {
+    onSave('general', data);
+  };
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Configurações Gerais</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* ***** INÍCIO DA CORREÇÃO JSX ***** */}
-        <div className="space-y-4"> {/* Div principal que faltava fechar no local correto */}
+    <>
+      {/* Card 1: Localização */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Localização e Idioma</CardTitle>
+          <p className="text-sm text-gray-500 mt-1">Defina como datas, horas e idioma são exibidos.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <Select
             label="Idioma"
             value={data.language}
-            onChange={(e) => onChange('language', e.target.value)}
+            onChange={(e) => onChange('general', 'language', e.target.value)}
             options={[
               { value: 'pt-BR', label: 'Português (Brasil)' },
               { value: 'en-US', label: 'English (US)' },
               { value: 'es-ES', label: 'Español' },
             ]}
           />
-
           <Select
             label="Fuso Horário"
             value={data.timezone}
-            onChange={(e) => onChange('timezone', e.target.value)}
+            onChange={(e) => onChange('general', 'timezone', e.target.value)}
             options={[
               { value: 'America/Sao_Paulo', label: 'Brasília (GMT-3)' },
               { value: 'America/New_York', label: 'New York (GMT-5)' },
               { value: 'Europe/London', label: 'London (GMT+0)' },
             ]}
           />
-
           <Select
             label="Formato de Data"
             value={data.dateFormat}
-            onChange={(e) => onChange('dateFormat', e.target.value)}
+            onChange={(e) => onChange('general', 'dateFormat', e.target.value)}
             options={[
               { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
               { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
               { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
             ]}
           />
-          
-          <div className="border-t border-gray-200 pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Notificações</h3>
-             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <label htmlFor="emailNotif" className="text-sm font-medium cursor-pointer">Notificações por E-mail</label>
-                <input 
-                  type="checkbox" 
-                  id="emailNotif" 
-                  className="w-4 h-4" 
-                  checked={data.emailNotifications}
-                  onChange={(e) => onChange('emailNotifications', e.target.checked)}
-                />
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <label htmlFor="pushNotif" className="text-sm font-medium cursor-pointer">Notificações Push</label>
-                <input 
-                  type="checkbox" 
-                  id="pushNotif" 
-                  className="w-4 h-4" 
-                  checked={data.pushNotifications}
-                  onChange={(e) => onChange('pushNotifications', e.target.checked)}
-                />
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <label htmlFor="alertSounds" className="text-sm font-medium cursor-pointer">Sons de Alerta</label>
-                <input 
-                  type="checkbox" 
-                  id="alertSounds" 
-                  className="w-4 h-4" 
-                  checked={data.alertSounds}
-                  onChange={(e) => onChange('alertSounds', e.target.checked)}
-                />
-              </div>
-            </div>
-          
-          {/* O botão deve estar dentro da div 'space-y-4' */}
-          <div className="flex justify-end pt-4">
-            <Button variant="primary" onClick={() => onSave('general', data)} isLoading={isSaving}>
+        </CardContent>
+        <CardFooter className="flex justify-end">
+           <Button variant="primary" onClick={handleSaveClick} isLoading={isSaving}>
+            <Save size={16} className="mr-2" />
+            Salvar Localização
+          </Button>
+        </CardFooter>
+      </Card>
+      
+      {/* Card 2: Notificações */}
+      <Card>
+         <CardHeader>
+            <CardTitle>Notificações</CardTitle>
+            <p className="text-sm text-gray-500 mt-1">Escolha como você deseja receber notificações.</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+             <ToggleSwitch
+              id="emailNotif"
+              label="Notificações por E-mail"
+              description="Receber alertas importantes por e-mail."
+              checked={data.emailNotifications}
+              onChange={(value) => onChange('general', 'emailNotifications', value)}
+            />
+            <ToggleSwitch
+              id="pushNotif"
+              label="Notificações Push (Em breve)"
+              description="Receber alertas no seu navegador."
+              checked={data.pushNotifications}
+              onChange={(value) => onChange('general', 'pushNotifications', value)}
+              disabled
+            />
+            <ToggleSwitch
+              id="alertSounds"
+              label="Sons de Alerta"
+              description="Ativar sons para novos alertas no dashboard."
+              checked={data.alertSounds}
+              onChange={(value) => onChange('general', 'alertSounds', value)}
+            />
+          </CardContent>
+           <CardFooter className="flex justify-end">
+             <Button variant="primary" onClick={handleSaveClick} isLoading={isSaving}>
               <Save size={16} className="mr-2" />
-              Salvar Alterações
+              Salvar Notificações
             </Button>
-          </div>
-          
-        </div> {/* Esta é a div 'space-y-4' que fecha corretamente AGORA */}
-        {/* ***** FIM DA CORREÇÃO JSX ***** */}
-      </CardContent>
-    </Card>
+          </CardFooter>
+      </Card>
+    </>
   );
 };
 
 
 // --- Componente Principal (Pai) ---
-
 const SettingsPage = () => {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
@@ -326,10 +351,8 @@ const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
-  
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Filtra as abas com base na role
   const isAdmin = user?.Role === 'Admin' || user?.role === 'Admin';
   const visibleTabs = tabs.filter(tab => {
     if (tab.id === 'system' && !isAdmin) {
@@ -338,7 +361,6 @@ const SettingsPage = () => {
     return true;
   });
   
-  // Garante que a aba ativa seja válida
   useEffect(() => {
     if (!visibleTabs.find(t => t.id === activeTab)) {
       setActiveTab('profile'); 
@@ -350,32 +372,51 @@ const SettingsPage = () => {
     setError(null);
     try {
       const data = await settingsService.getSettings();
-      // Mescla dados do token (boa prática)
+      
       if (data.profile) {
         data.profile.name = data.profile.name || user?.name;
         data.profile.email = data.profile.email || user?.email;
         data.profile.role = data.profile.role || user?.role;
       }
-      setSettings(data);
+      
+      setSettings({
+        profile: data.profile || {},
+        general: data.general || { language: 'pt-BR', timezone: 'America/Sao_Paulo', dateFormat: 'DD/MM/YYYY', emailNotifications: true, alertSounds: true, pushNotifications: false },
+        system: data.system || { enableDetailedLogs: false, debugMode: false },
+      });
+      
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user]); 
 
   useEffect(() => {
     loadData();
   }, [loadData]); 
 
-  const handleSave = async (section, data) => {
+  // Salva dados (a lógica de qual payload enviar está em cada subcomponente)
+  const handleSave = async (section, payload) => {
     setIsSaving(true);
     setError(null);
     setSaveSuccess(false);
-    try {
-      await settingsService.saveSettings(section, data);
+    
+    // Mostra feedback de sucesso
+    const showSuccess = () => {
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000); 
+      setTimeout(() => setSaveSuccess(false), 3000);
+    };
+    
+    try {
+      await settingsService.saveSettings(section, payload);
+      
+      // Se salvou o perfil, recarrega os dados para atualizar o fallback
+      if (section === 'profile') {
+         await loadData();
+      }
+      
+      showSuccess();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -383,6 +424,7 @@ const SettingsPage = () => {
     }
   };
   
+  // Atualiza o estado pai
   const handleChange = (section, key, value) => {
     setSettings(prev => ({
         ...prev,
@@ -393,15 +435,18 @@ const SettingsPage = () => {
     }));
   };
 
+  // Encontra a descrição da aba ativa para o cabeçalho
+  const activeTabInfo = visibleTabs.find(t => t.id === activeTab) || visibleTabs[0];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
          <div>
             <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
-            <p className="text-gray-600 mt-1">Gerencie as configurações do sistema</p>
+            <p className="text-gray-600 mt-1">Gerencie suas preferências pessoais e de sistema.</p>
          </div>
          {saveSuccess && (
-            <div className="flex items-center space-x-2 text-success-700 bg-success-100 p-2 rounded-lg">
+            <div className="flex items-center space-x-2 text-success-700 bg-success-100 p-3 rounded-lg animate-fade-in mt-4 sm:mt-0">
                 <CheckCircle size={18} />
                 <span className="text-sm font-medium">Salvo com sucesso!</span>
             </div>
@@ -409,7 +454,7 @@ const SettingsPage = () => {
       </div>
       
       {error && (
-        <ErrorMessage title="Erro" message={error} onRetry={() => setError(null)} />
+        <ErrorMessage title="Erro" message={error} onRetry={loadData} />
       )}
 
       {loading ? (
@@ -417,25 +462,26 @@ const SettingsPage = () => {
       ) : !settings ? (
          <ErrorMessage title="Erro ao Carregar" message="Não foi possível carregar as configurações." onRetry={loadData} />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <Card className="lg:col-span-1 h-fit"> 
-            <CardContent className="pt-6">
-              <nav className="space-y-2">
-                {/* Mapeia as abas visíveis */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+          
+          {/* Navegação das Abas (Esquerda) */}
+          <Card className="lg:col-span-1 h-fit sticky top-24"> 
+            <CardContent className="pt-4 lg:pt-6">
+              <nav className="space-y-1">
                 {visibleTabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                      className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
                         activeTab === tab.id
-                          ? 'bg-primary-100 text-primary-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-primary-100 text-primary-700 font-semibold'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                       }`}
                     >
-                      <Icon size={20} />
-                      <span>{tab.name}</span>
+                      <Icon size={20} className="flex-shrink-0" />
+                      <span className="text-sm">{tab.name}</span>
                     </button>
                   );
                 })}
@@ -443,32 +489,47 @@ const SettingsPage = () => {
             </CardContent>
           </Card>
 
+          {/* Conteúdo da Aba (Direita) */}
           <div className="lg:col-span-3 space-y-6">
+            
+            {/* Cabeçalho da Seção Ativa */}
+            <div className="mb-2">
+              <h2 className="text-2xl font-semibold text-gray-900">{activeTabInfo.name}</h2>
+              <p className="text-gray-500">{activeTabInfo.description}</p>
+            </div>
+
             {activeTab === 'profile' && settings.profile && (
               <ProfileSettings 
                 data={settings.profile} 
                 onSave={handleSave} 
                 isSaving={isSaving}
-                onChange={(key, value) => handleChange('profile', key, value)}
+                onChange={handleChange}
               />
             )}
-            {activeTab === 'security' && <SecuritySettings onSave={handleSave} isSaving={isSaving} />}
             
-            {activeTab === 'system' && settings.system && (
-                 <SystemSettings 
-                    data={settings.system}
-                    onSave={handleSave} 
-                    isSaving={isSaving}
-                    onChange={(key, value) => handleChange('system', key, value)}
-                 />
-            )}
             {activeTab === 'general' && settings.general && (
                 <GeneralSettings 
                     data={settings.general}
                     onSave={handleSave} 
                     isSaving={isSaving}
-                    onChange={(key, value) => handleChange('general', key, value)}
+                    onChange={handleChange}
                 />
+            )}
+            
+            {activeTab === 'security' && (
+                <SecuritySettings 
+                    onSave={handleSave} 
+                    isSaving={isSaving} 
+                />
+            )}
+            
+            {activeTab === 'system' && settings.system && isAdmin && (
+                 <SystemSettings 
+                    data={settings.system}
+                    onSave={handleSave} 
+                    isSaving={isSaving}
+                    onChange={handleChange}
+                 />
             )}
           </div>
         </div>
@@ -477,7 +538,7 @@ const SettingsPage = () => {
   );
 };
 
-// PropTypes (todos corretos)
+// PropTypes (Validação das props dos subcomponentes)
 ProfileSettings.propTypes = {
   data: PropTypes.object.isRequired,
   onSave: PropTypes.func.isRequired,

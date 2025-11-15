@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Home, BarChart2, Users, Bell, Settings, ChevronsLeft, ChevronsRight, Shield } from 'lucide-react';
+import { Home, BarChart2, Users, Bell, Settings, Shield } from 'lucide-react'; // Removido Chevrons
 import { cn } from '../../../shared/utils';
 import { useAuthStore } from '../../../store/authStore';
 
 const navItems = [
+// ... (código existente ... )
   { to: '/dashboard', icon: Home, label: 'Dashboard' },
   { to: '/campaigns', icon: BarChart2, label: 'Campanhas' },
   { to: '/clients', icon: Users, label: 'Clientes', adminOnly: true },
@@ -13,10 +14,11 @@ const navItems = [
   { to: '/settings', icon: Settings, label: 'Configurações', adminOnly: false },
 ];
 
-const Sidebar = ({ isCollapsed, toggleSidebar }) => {
+// ATUALIZADO: A sidebar não controla mais o toggle
+const Sidebar = ({ isCollapsed }) => {
   const { user } = useAuthStore();
-
   const isAdmin = user?.role === 'Admin';
+
   return (
     <aside
       className={cn(
@@ -24,10 +26,24 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
         isCollapsed ? 'w-20' : 'w-64'
       )}
     >
-      {/* Seção do Logo */}
-      <div className="flex items-center justify-center h-16 flex-shrink-0 border-b px-4">
-        <div className={cn("flex items-center justify-center bg-primary-600 text-white font-bold rounded-lg transition-all w-10 h-10 text-xl")}>
+      {/* Seção do Logo ATUALIZADA */}
+      <div className={cn(
+        "flex items-center h-16 flex-shrink-0 border-b px-4",
+        isCollapsed ? "justify-center" : "justify-start px-6"
+      )}>
+        {/* Ícone do Logo (Sempre visível) */}
+        <div className="flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-800 text-white font-bold rounded-lg w-10 h-10 text-xl flex-shrink-0">
           CW
+        </div>
+        
+        {/* Texto do Logo (Aparece/desaparece) */}
+        <div 
+          className={cn(
+            "ml-3 transition-all duration-200 overflow-hidden",
+            isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+          )}
+        >
+          <h1 className="text-lg font-bold text-gray-900 whitespace-nowrap">Campaign Watch</h1>
         </div>
       </div>
 
@@ -57,7 +73,7 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
                 >
                   {item.label}
                 </span>
-                {/* Tooltip que aparece ao passar o mouse quando está recolhido */}
+                {/* Tooltip */}
                 {isCollapsed && (
                   <span className="absolute left-full ml-4 w-auto p-2 min-w-max rounded-md shadow-md text-white bg-gray-800 text-xs font-bold transition-all duration-100 scale-0 origin-left group-hover:scale-100 z-10">
                     {item.label}
@@ -69,24 +85,14 @@ const Sidebar = ({ isCollapsed, toggleSidebar }) => {
         </ul>
       </nav>
 
-      {/* Botão para Recolher/Expandir */}
-      <div className="border-t p-2">
-        <button
-          onClick={toggleSidebar}
-          className="w-full flex items-center justify-center p-3 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
-          aria-label={isCollapsed ? 'Expandir menu' : 'Recolher menu'}
-        >
-          {isCollapsed ? <ChevronsRight size={20} /> : <ChevronsLeft size={20} />}
-        </button>
-      </div>
+      {/* Botão para Recolher/Expandir FOI REMOVIDO DAQUI */}
     </aside>
   );
 };
 
-// Adicionando validação das props
+// ATUALIZADO: Validação das props
 Sidebar.propTypes = {
   isCollapsed: PropTypes.bool.isRequired,
-  toggleSidebar: PropTypes.func.isRequired,
 };
 
 export default Sidebar;
